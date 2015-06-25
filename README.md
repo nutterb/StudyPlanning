@@ -1,2 +1,4 @@
-# StudyPlanning
-Statistical Power and Sample Size Analysis
+StudyDesign
+===========
+
+Tools for Investigating Power, Sample Size, and Other Attributes in Study Planning

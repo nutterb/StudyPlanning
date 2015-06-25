@@ -1,0 +1,292 @@
+---
+output: 
+  html_document:
+    fig_caption: yes
+---
+<!--
+%\VignetteEngine{knitr::knitr}
+%\VignetteIndexEntry{One Sample T-Test}
+-->
+```{r, echo=FALSE}
+library(ggplot2)
+library(plyr)
+```
+# One Sample T-Test
+
+**Table of Contents**
+
+1. The One Sample T-Test  
+2. Decision Rule
+    a. Two-sided Test
+    b. One-sided Test
+3. Examples (Not Complete)
+    a. Calculating Power
+    b. Calculating Sample Size
+    c. Minimum Change
+    d. Standard Deviation
+    e. Significance Level
+4. Study Design Derivations
+    a. Power
+    b. Sample Size (Not Complete)
+    c. Minimum Change (Not Complete)
+    d. Standard Deviation (Not Complete)
+    e. Significance Level (Not Complete)
+5. References
+
+## 1. The One Sample T-Test
+The one sample t-test is commonly used to look for evidence that the mean of a 
+normally distributed random variable may differ from a hypothesized (or 
+previously observed) value.  The hypotheses for these test take the forms:
+
+For a two-sided test:
+$$
+  \begin{align}
+  H_0: \mu &= \mu_0\\
+  H_1: \mu &\neq \mu_0
+  \end{align}
+$$
+
+For a one-sided test:
+$$
+  \begin{align}
+  H_0: \mu &< \mu_0\\
+  H_1: \mu &\geq \mu_0
+  \end{align}
+$$
+
+or 
+$$
+  \begin{align}
+  H_0: \mu &> \mu_0\\
+  H_1: \mu &\leq \mu_0
+  \end{align}
+$$
+
+To compare a sample $(X_1, \ldots, X_n)$ against the hypothesized value, a 
+T-statistic is calculated in the form:
+
+$$T = \frac{\bar{x} - \mu_0}{s / \sqrt{n}}$$
+
+Where $\bar{x}$ is the sample mean and $s$ is the sample standard deviation.
+
+## 2. Decision Rule
+The decision to reject a null hypothesis is made when an observed T-value lies
+in a critical region that suggests the probability of that observation is low.
+We define the critical region as the upper bound we are willing to accept for
+$\alpha$, the Type I Error.
+
+### Two-Sided Test
+In the two-sided test, $\alpha$ is shared equally in both tails.  The rejection
+regions for the most common values of $\alpha$ are depicted in the figure below, 
+with the sum of shaded areas on both sides equaling the corresponding $\alpha$.
+It follows, then, that the decision rule is:
+
+Reject $H_0$ when $T \leq t_{\alpha/2, n-1}$ or when $T \geq t_{1-\alpha/2, n-1}$.
+
+By taking advantage of the symmetry of the T-distribution, we can simplify the
+decision rule to:
+
+Reject $H_0$ when $|T| \geq t_{1-\alpha/2, n-1}$
+
+```{r, echo=FALSE, fig.height=3, fig.width=6, fig.cap="The example displayed uses 25 degrees of freedom"}
+polyFill <- function(X){
+  df <- X$df[1]
+  alpha <- X$alpha[1]
+  x <- X$x
+  fill <- data.frame(x = x,
+                     y = dt(x, df),
+                     alpha=rep(alpha, length(x)),
+                     positive = X$positive)
+  fill <- fill[order(fill$x), ]
+  fill <- rbind(data.frame(x=min(fill$x),
+                           y = 0,
+                           alpha=alpha,
+                           positive = min(fill$x) > 0),
+                fill,
+                data.frame(x=c(max(fill$x), min(fill$x)),
+                           y = rep(0, 2),
+                           alpha=rep(alpha, 2),
+                           positive = rep(min(fill$x) > 0, 2)))
+  fill$positive <- factor(fill$positive, c(FALSE, TRUE), 
+                          c("Lower Tailed", "Upper Tailed"))
+  return(geom_polygon(data=fill, 
+                      aes(x=x, y=y, fill=factor(alpha), colour=positive), alpha=.8))
+}
+  
+df <- 25
+X <- data.frame(x = seq(-5, 5, by=.01))
+X <- transform(X, 
+               p = dt(x, df))  
+
+Pos <- expand.grid(x = seq(-5, 5, by=.1),
+                   alpha=c(0.10, 0.05, 0.01),
+                   df = df)
+Pos <- transform(Pos, 
+                 p = dt(x, df),
+                 cum.p = pt(x, df))
+Pos <- transform(Pos,
+                 positive = ifelse(x > 0, TRUE, FALSE),
+                 keep = ifelse(pt(x, 25) <= alpha/2 | pt(x, 25) >= (1-alpha/2),
+                               TRUE, FALSE))
+Pos <- Pos[Pos$keep, ]
+
+Poly <- dlply(Pos,
+             c("alpha", "positive"),
+             polyFill)
+
+ggplot(X, aes(x=x, y=p)) + geom_line() + Poly[length(Poly):1] + 
+  scale_fill_manual(values=rev(c("#EDF8E9", "#BAE4B3", "#74C476", "#31A354", "#006D2C")))  + 
+  scale_colour_manual(values=c(NA, NA)) +
+  guides(colour=FALSE) + 
+  xlab("T-value") + ylab("Probability") + labs(fill="alpha")
+```
+
+### One Sided Test
+In the one-sided test, $\alpha$ is placed in only one tail.  The rejection
+regions for the most common values of $\alpha$ are depicted in the figure below.
+In each case, $\alpha$ is the area in the tail of the figure.
+It follows, then, that the decision rule for a lower tailed test is:
+
+Reject $H_0$ when $T \leq t_{\alpha, n-1}$.
+
+For an upper tailed test, the decision rule is:
+
+Reject $H_0$ when $T \geq t_{1-\alpha, n-1}$.
+
+Again, by using the symmetry of the T-distribution, we can simplify the 
+decision rule as:
+
+Reject $H_0$ when $|T| \geq t_{1-\alpha, n-1}$.
+
+```{r, echo=FALSE, fig.height=3, fig.width=6, fig.cap="The example displayed uses 25 degrees of freedom"}
+df <- 25
+X <- data.frame(x = seq(-5, 5, by=.01))
+X <- transform(X, 
+               p = dt(x, df))  
+
+Pos <- expand.grid(x = seq(-5, 5, by=.1),
+                   alpha=c(0.10, 0.05, 0.01),
+                   df = df)
+Pos <- transform(Pos, 
+                 p = dt(x, df),
+                 cum.p = pt(x, df))
+Pos <- transform(Pos,
+                 positive = ifelse(x > 0, TRUE, FALSE),
+                 keep = ifelse(pt(x, 25) <= alpha | pt(x, 25) >= (1-alpha),
+                               TRUE, FALSE))
+Pos <- Pos[Pos$keep, ]
+
+Poly <- dlply(Pos,
+             c("alpha", "positive"),
+             polyFill)
+
+ggplot(X, aes(x=x, y=p)) + geom_line() + Poly[length(Poly):1] + 
+  scale_fill_manual(values=rev(c("#EDF8E9", "#BAE4B3", "#74C476", "#31A354", "#006D2C"))) + 
+  scale_color_manual(values=c(NA, NA)) +
+  facet_grid(~ positive) + guides(colour=FALSE) + 
+  xlab("T-value") + ylab("Probability") + labs(fill="alpha", colour=NULL)
+```
+
+### Decision Rules In Terms of $\bar{x}$
+The decision rule can also be written in terms of $\bar{x}$:
+
+Reject $H_0$ when $\bar{x} \leq \mu_0 - t_\alpha \cdot s/\sqrt{n}$ or
+$\bar{x} \geq \mu_0 + t_\alpha \cdot s/\sqrt{n}$.
+
+This change can be justified by:
+
+$$
+\begin{align}
+|T| &\geq t_{1-\alpha, n-1}\\
+\Big|\frac{\bar{x} - \mu_0}{s/\sqrt{n}}\Big| &\geq t_{1-\alpha, n-1} 
+\end{align}
+$$
+
+
+
+$$
+\begin{align}
+-\Big(\frac{\bar{x} - \mu_0}{s/\sqrt{n}}\Big) &\geq t_{1-\alpha, n-1} &
+    \frac{\bar{x} - \mu_0}{s/\sqrt{n}} &\geq t_{1-\alpha, n-1}\\
+\bar{x} - \mu_0 &\leq - t_{1-\alpha, n-1} \cdot s/\sqrt{n} &
+    \bar{x} - \mu_0 &\geq t_{1-\alpha, n-1} \cdot s/\sqrt{n}\\
+\bar{x} &\leq \mu_0 - t_{1-\alpha, n-1} \cdot s/\sqrt{n} &
+    \bar{x} &\geq \mu_0 + t_{1-\alpha, n-1} \cdot s/\sqrt{n} 
+\end{align}
+$$
+
+For a two-sided test, both the conditions apply.  The left side condition is used
+for a left-tailed test, and the right side condition for a right-tailed test.
+
+
+
+## 3. Examples
+
+## 4. Study Design Derivations
+The derivations below make use of the following symbols:
+
+* $\bar{x}$: The sample mean
+* $s$: The sample standard deviation
+* $n$: The sample size
+* $\mu_0$: The value of population mean under the null hypothesis
+* $\mu$: The value of the population mean under the alternative hypothesis.
+* $\alpha$: The significance level
+* $\gamma(\mu)$: The power of the test for the parameter $\mu$.
+* $t_{\alpha, n-1}$: A quantile of the central t-distribution for a probability,
+    $\alpha$ and $n-1$ degrees of freedom.
+* $T$: A calculated value to be compared against a t-distribution.
+* $C$: The critical region (rejection region) of the test.
+
+### 4a. Power
+
+#### Two-Sided Test
+
+$$
+\begin{align}
+\gamma(\mu) &= P_\mu(\bar{x} \in C)\\
+&= P_\mu\big(\bar{x} \leq \mu_0 - t_{\alpha/2, n-1} \cdot s/\sqrt{n}\big) +
+               P_\mu\big(\bar{x} \geq \mu_0 + t_{1-\alpha/2, n-1} \cdot s/\sqrt{n}\big)\\
+&= P_\mu\big(\bar{x} - \mu \leq \mu_0 - \mu - t_{\alpha/2, n-1} \cdot s/\sqrt{n}\big) +
+   P_\mu\big(\bar{x} - \mu \geq \mu_0 - \mu + t_{1-\alpha/2, n-1} \cdot s/\sqrt{n}\big)\\
+&= P_\mu\Big(\frac{\bar{x} - \mu}{s/\sqrt{n}} \leq 
+        \frac{\mu_0 - \mu - t_{\alpha/2, n-1} \cdot s/\sqrt{n}}{s/\sqrt{n}}\Big) +
+   P_\mu\Big(\frac{\bar{x} - \mu}{s/\sqrt{n}} \geq 
+        \frac{\mu_0 - \mu + t_{1-\alpha/2, n-1} \cdot s/\sqrt{n}}{s/\sqrt{n}}\Big)\\
+&= P_\mu\Big(T \leq \frac{\mu_0 - \mu}{s/\sqrt{n}} - t_{\alpha/2, n-1}\Big) + 
+   P_\mu\Big(T \geq \frac{\mu_0 - \mu}{s/\sqrt{n}} + t_{1-\alpha/2, n-1}\Big)\\
+&= P_\mu\Big(T \leq -t_{\alpha/2, n-1} + \frac{\mu_0 - \mu}{s/\sqrt{n}}\Big) + 
+   P_\mu\Big(T \geq t_{1-\alpha/2, n-1} + \frac{\mu_0 - \mu}{s/\sqrt{n}}\Big)\\
+&= P_\mu\Big(T \leq -t_{\alpha/2, n-1} + \frac{\sqrt{n} \cdot (\mu_0 - \mu)}{s}\Big) + 
+   P_\mu\Big(T \geq t_{1-\alpha/2, n-1} + \frac{\sqrt{n} \cdot (\mu_0 - \mu)}{s}\Big)
+\end{align}
+$$
+
+Both $t_{\alpha/2, n-1}$ and $t_{1-\alpha/2, n-1}$ have non-central T-distributions
+with non-centrality parameter $\frac{\sqrt{n} (\mu_0 -\mu)}{s}$.
+   
+
+#### One-Sided Test
+For convenience, the power for only the upper tailed test is derived here.  
+Recall that the symmetry of the t-test allows us to use the decision rule:
+Reject $H_0$ when $|T| \geq t_{1-\alpha}$.  Thus, where $T$ occurs in the 
+derivation below, it may reasonably be replaced with $|T|$.
+
+$$
+\begin{align}
+\gamma(\mu)  &= P_\mu(\bar{x} \in C)\\
+&= P_\mu\big(\bar{x} \geq \mu_0 + t_{1-\alpha, n-1} \cdot s / \sqrt{n}\big)\\
+&= P_\mu\big(\bar{x} - \mu \geq \mu_0 - \mu + t_{1-\alpha, n-1} \cdot s / \sqrt{n}\big)\\
+&= P_\mu\Big(\frac{\bar{x} - \mu}{s/\sqrt{n}} \geq 
+    \frac{\mu_0 - \mu + t_{1-\alpha, n-1} \cdot s / \sqrt{n}}{s / \sqrt{n}}\Big)\\
+&= P_\mu\Big(T \geq \frac{\mu_0 - \mu}{s/\sqrt{n}} + t_{1-\alpha, n-1} \Big)\\
+&= P_\mu\Big(T \geq t_{1-\alpha, n-1} + \frac{\mu_0 - \mu}{s/\sqrt{n}}\Big)\\
+&= P_\mu\Big(T \geq t_{1-\alpha, n-1} + \frac{\sqrt{n} \cdot (\mu_0 -\mu)}{s}\Big)
+\end{align}
+$$
+
+Where $t_{1-\alpha, n-1} + \frac{\sqrt{n} (\mu_0 -\mu)}{s}$ has a non-central 
+t-distribution with non-centrality parameter $\frac{\sqrt{n} (\mu_0 -\mu)}{s}$
+
+## 5. References
+Hogg RV, McKean JW, Craig AT, _Introduction to Mathematical Statistics_,
+Pearson Prentice Hall 6th ed., 2005. ISBN: 0-13-008507-3

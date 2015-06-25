@@ -1,0 +1,329 @@
+<!--
+%\VignetteEngine{knitr::knitr}
+%\VignetteIndexEntry{Likelihood Ratio Positive}
+-->
+# Likelihood Ratio Positive
+
+**Table of Contents**
+
+1. Likelihood Ratio Positive  
+    a. Definitions and Terminology
+2. Confidence Limits
+3. Study Design: Estimation Based on Lower Limit
+4. Example: Post-operative CAUTI's
+    a. Equally Sized Disease and Non-Disease Groups
+    b. Unequally Sized Disease and Non-Disease Groups
+    c. Minimum Lower Confidence Limit
+    d. Significance Level
+    e. Sensitivity
+5. Study Design Derivations
+    a. Equally Sized Disease and Non-Disease Groups
+    b. Unequally Sized Disease and Non-Disease Groups
+    c. Significance Level
+6. References
+
+
+## 1. Likelihood Ratio Positive
+The likelihood ratio positive $LR_P$ is a measure comparing positive results from a diagnostic test.
+If we are using a test $T$ to diagnose a disease, $D$, we let $T^-$ indicate a negative test result, $T^+$ a 
+positive test results, while $D^-$ designates no disease and $D^+$ designates the presence of disease.  The results of the testing may be illustrated as
+
+_Table 1: Diagnostic Testing_  
+
+| | | |
+|-------|-------|-------|
+|       | $D^+$ | $D^-$ |
+| $T^+$ | A     | B     |
+| $T^-$ | C     | D     |
+|       | $n_d$ | $n_h$ |
+
+
+
+The sensitivity of a test is defined as $s_e = P(T^+|D^+)$ (the probability that disease is detected when it is present) while specificity is defined as $s_p = P(T^-|D^-)$ (the probability that no disease is detected when there is no disease).  The likelihood ratio positive is the ratio of probabilities for detecting disease when it is and is not present, or 
+$$ LR_P = \frac{s_e}{1 - s_p} = \frac{P(T^+|D^+)}{1 - P(T^-|D^-)} $$
+
+Another way of describing the Likelihood Ratio Positive is the ratio of true positives to the ratio of false positives.  A high value of $LR_P$ suggests the test is good at discriminating disease from non disease.
+
+While the null value of $LR_P$ is 1.0, we should expect to see $LR_P > 1.0$ for a well designed diagnostic test.  When $LR_P < 1.0$, the test is giving more false positives than it is true positives.
+
+### 1a. Definitions and Terminology
+The parameters invovled in an estimation based study design for Likelihood Ratio Positive are:
+
+* $LR_P^L$, the lower limit of the confidence interval of $LR_P$
+* $s_e$, the sensitivity of the diagnostic test.  Based on Table 1, this could also be expressed $s_e = A / (A+C) = A / n_d$.
+* $s_p$, the specificity of the diagnostic test. Based on Table 1, this could also be expressed $s_p = D / (B+D) = D / n_h$.
+* $\alpha$, the significance level, or $1-c$, where $c$ is the level of confidence.
+* $n_d$, the total number of subjects in the disease group.  Based on Table 1, this can also be expressed as $n_d = A + C$
+* $n_h$, the total number of subjects in the non-disease (healthy) group.  Based on Table 1, this can also be expressed as $n_h = B + D$
+* $n$, the total number of subjects in the study
+
+## 2. Confidence Limits
+The formula for calculating the confidence interval is given by Simel, et. al as:
+$$exp\Big\{ \ln \frac{s_e}{1-s_p} \pm z_{\alpha/2} \cdot \sqrt{\frac{1-s_e}{A} + \frac{s_p}{B}}   \Big\}$$
+
+The lower and upper limits, expressed as $LR_P^L$ and $LR_P^U$, respectively, may be written individually as:
+$$LR_P^L = exp\Big\{ \ln \frac{s_e}{1-s_p} - z_{\alpha/2} \cdot \sqrt{\frac{1-s_e}{A} + \frac{s_p}{B}}   \Big\}$$
+
+and
+$$LR_P^U = exp\Big\{ \ln \frac{s_e}{1-s_p} + z_{\alpha/2} \cdot \sqrt{\frac{1-s_e}{A} + \frac{s_p}{B}}   \Big\}$$
+
+## 3. Study Design Based on the Lower Limit
+In most applications, we will be interested in designing the study so as to be confident that $LR_P$ is larger than some value.  We are unlikely to be concerned about the $LR_P$ being too big because larger $LR_P$ means better discrimination.  In order to be confident that the true $LR_P$ is larger than a clinically relevant value, we can set the clinically relevant value at the lower limit of the confidence interval.  When $\alpha = 0.05$, this would give us 95% confidence that the true $LR_P$ is larger than the clinically relevant value (and even somewhat more confident).
+
+Practically speaking, then, for the purposes of the study design, we will use the minimum clinically relevant value as the value of $LR_P^L$.
+
+## 4. Example: Post-operative CAUTI's
+A study aims to determine whether urine dipstick analylsis is accurrate in predicting the presence of post-operative symptomatic catheter associated urinary tract infections (CAUTI) in women undergoing pelvic organ prolapse and incontinence surgeries. It is currently unclear if urine dip stick analysis is associated with culture verified urinary tract infections. The study is a prospective cohort study of women undergoing pelvic floor surgeries who require post-operative catheterization.  
+
+The researchers have indicated that the test would be clinically meaningful if the likelihood ratio positive is at least 2.0 and are willing to tolerate a false positive rate of 25%.  They have also indicated that they would consider as a diagnostic tool only if its sensitivity were greater than 80%.  Past studies have demonstrated that 30% of women requiring post-operative catheterization will have a UTI.  Before beginning to recruit patients, the researchers wish to know how many subjects they must recruit.
+
+There are several ways we could evaluate a study design, depending on what information is available, the resources available for the study, or the research hypothesis.  We will start by deriving the most commonly desired values (the sample size), and work our way into the less common approaches we could take to design a study.
+
+### 4a. Equally Sized Disease and Non-Disease Groups
+In our first example, we will ignore one element of the information we have and make no assumption regarding the disease rate. With an unknown disease rate, we may choose to explore a few different possibilities so as to understand the impact the disease rate will have on our total sample size.  We will also vary the sensitivity of the test from .60 to .90 to evaluate the impact of less than desired sensitivity on the study design.
+
+```{r, fig.height=3.5, fig.width=9}
+library(StudyPlanning)
+library(ggplot2)
+n_est <- interval_lrp(lr=2.0, 
+                        n=NULL, 
+                        sens=seq(0.60, 0.90, by=.01),
+                        spec=.75,
+                        weights = list(c(20, 80), 
+                                       c(40, 60),
+                                       c(50, 50)))
+ggplot(n_est, aes(x=sens,  y=n, colour=factor(disease.rate))) + 
+  geom_line()
+```
+
+The results make it evident that the study design requires many more patients when the sensitivity of the test is low.  The disease rate, however, has less impact on the total sample size than the sensitivity.
+
+### 4b. Unequally Sized Disease and Non-Disease Groups
+If we return now to the original parameters of the CAUTI study, we note that the disease rate reported in other research is 30%.  Given the stated preference for a sensitivity of at least 80%, we can be better informed about the effect of sensitivity on the sample size by using a range of values from 75% to 90% (slightly worse to a bit better than required).
+
+```{r, fig.height=3.5, fig.width=9}
+library(StudyPlanning)
+library(ggplot2)
+n_est <- interval_lrp(lr=2.0,
+                        n=NULL,
+                        sens=seq(0.75, 0.90, by=.01),
+                        spec=.75,
+                        weights=list(c(25, 75),
+                                     c(30, 70),
+                                     c(35, 65)))
+ggplot(n_est, aes(x=sens, y=n, colour=factor(disease.rate))) +
+  geom_line()
+```
+
+Under these conditions, an total sample size of `r n_est$n[n_est$sens == .80 & n_est$disease.rate == .30]` is sufficient to estimate $LR_P$ with a minimum confidence limit of 2.0.  We would expect `r n_est$nd[n_est$sens == .80 & n_est$disease.rate == .30]` in the disease group and `r n_est$nh[n_est$sens == .80 & n_est$disease.rate == .30]` in the non-disease group.
+
+An observation of note in this analysis is that a modest increase in the sample size, say to 100, would allow the study to accomplish the same objective even if the observed sensitivity is a little less than 80%.  A sample size of `r (nice.n <- n_est$n[n_est$disease.rate==.30][which.min(abs(n_est$n - 100))])` would permit us to estimate $LR_P$ with the desired precision when the sensitivity is `r n_est$sens[n_est$n==nice.n & n_est$disease.rate==.30]`, which may well be neither clinically nor statistically different from 0.80.  Thus, if the study materials to test an additional `r nice.n - n_est$n[n_est$sens == .80 & n_est$disease.rate == .30]` subjects, it is probably beneficial to do so.
+
+### 4c. Minimum Lower Confidence Limit
+In some instances, we may be limited in the number of subjects we may recruit.  Instead of setting the lower limit of the confidence interval, it may be of interest to know what kind of precision we can expect.  For instance, suppose we know that only 8 patients are discharged with catheters every month, and the study will only enroll patients for one year.  At most, we can expect to have `r 8*12` subjects in the study.  Is this enough to estimate $LR_P$ such that we can reasonably believe $LR_P > 2.0$?  If not, what kind of precision can we expect?
+
+```{r, fig.height=3.5, fig.width=9}
+library(StudyPlanning)
+library(ggplot2)
+library(plyr)
+
+lr_est <- interval_lrp(lr=NULL, 
+                         n=c(65, 72, 80), 
+                         sens=seq(0.75, 0.90, by=.01),
+                         spec=.75,
+                         weights=list(c(0.30, 0.70)))
+ggplot(lr_est, aes(x=sens, y=lr, colour=factor(n))) + geom_line() + 
+  geom_abline(intercept=2.0, slope=0, colour="red")
+```
+
+The results show that the desired precision can not be obtained given the limitations on the sample size.  The lower limit of $LR_P$ can when sensitivity is 0.80 can be displayed:
+```{r}
+lr_est[lr_est$sens == 0.80, ]
+```
+
+Or the sensitivity required to match the desired presicion can be displayed:
+```{r}
+ddply(lr_est,
+      "n",
+      subset,
+      lr >= 2.0 & lr == min(lr[lr >= 2.0]))
+```
+
+### 4d. Significance Level
+Another way to consider address the situation where we have a fixed $n$ is to evaluate the level of significance (or confidence) we can place in our desired precision.  In this case, we'll fix the sample size and $LR_P$, and let use these values to determine $\alpha$.
+
+```{r, fig.height=3.5, fig.width=9}
+library(StudyPlanning)
+library(ggplot2)
+library(plyr)
+
+lr_est <- interval_lrp(lr=2.0, 
+                         n=c(65, 72, 80), 
+                         sens=seq(0.75, 0.90, by=.01),
+                         spec=.75,
+                         weights=list(c(0.30, 0.70)),
+                         alpha=NULL)
+ggplot(lr_est, aes(x=sens, y=alpha, colour=factor(n))) + geom_line() 
+```
+
+If we prefer to show the confidence level, we can use:
+```{r, fig.height=3.5, fig.width=9}
+ggplot(lr_est, aes(x=sens, y=1 - alpha, colour=factor(n))) + geom_line()  + 
+  ylab("1-alpha (confidence)")
+```
+Even under the sample size restrictions, our confidence that $LR_P > 2.0$ is greater than 90% when the sensitivity is at least 0.80.
+
+### 4e. Calculating $n$ from a $n_d$ or $n_h$
+If for some reason an estimate of the number of diseased ($n_d$) or non-diseased ($n_h$) patients is available, but not the total number of patients, we can calculate the correct $n$ as long as we know the disease rate.  I am having a hard time imagning when this problem might arise.  Perhaps it has been established that only a certain number of diseased patients may be tested.  Regardless, since `interval_lrp` makes no accommodation for the situation, I thought it would be prudent to show how to work around this issue.
+
+It is shown in Section 5b that for a fixed $n$, $n_d = \frac{r}{1-r} \cdot n_h$.  From there, a few twist of algebra can also show that $n_h = \frac{1-r}{r} \cdot n_d$.  Thus, if we are limited to only 20 diseased patients in a population with a 30% disease rate, we would use $n = n_d + n_h = 20 + \frac{1-.3}{.3} \cdot 20 = 20 + 40.667 = 66.667$ or $n=67$ patients.  
+
+If we are limited to only 50 healthy patients, we use $n=n_d + n_h = \frac{.3}{1-.3} \cdot 50 + 50 = 21.429 + 50 = 71.429$ or $n = 72$ patients.
+
+### 4f. Sensitivity
+The formula for calculating the $LR_P^L$ cannot be reduced to calculate $s_e$.  Numerical methods could be used to estimate $s_e$, but it _is_ possible that the conditions of the study design don't allow for a solution.  For instance, if the sample size is small and $LR_P$ is set to 2.5, there may not be a value of $s_e$ that yields a solution.  
+
+Since sensitivity has a limited domain ($0 \leq s_e \leq 1$), we can easily evaluate whether or not we can satisfy our proposed conditions by performing a calculation for _all_ values of $s_e$.
+
+Returning to the CAUTI example, suppose we wish to determine the sensitivity required to estimate an $LR_P$ larger than 2.0 when we are limited to a total sample size of $n = 100$.  We'll assume that the disease rate is 30% and that the test has a specificity of 0.75.
+
+```{r, fig.height=3.5, fig.width=9}
+library(StudyPlanning)
+library(ggplot2)
+est_sens <- interval_lrp(lr=NULL, n=100, sens=seq(0, 1, by=.01),
+                           spec = .75, weights=list(c(0.30, 0.70)))
+ggplot(est_sens, aes(x=sens, y=lr)) + geom_line() + 
+  geom_abline(intercept = 2.0, slope=0, colour="red")
+```
+
+Reviewing the plot shows that we can have reasonable confidence that $LR_P > 2.0$ provided that the sensitivity of the diagnostic test is greater than 
+`r est_sens$sens[min(which(est_sens$lr > 2.0))]`
+
+Suppose, instead, that we have a sample size of $n=50$, but we aren't sure what the disease rate will be.  In this case, we use a disease rate of 0.5, which yields the following result:
+
+```{r, fig.height=3.5, fig.width=9}
+library(StudyPlanning)
+library(ggplot2)
+est_sens <- interval_lrp(lr=NULL, n=50, sens=seq(0, 1, by=.01),
+                           spec = .73, weights=list(c(0.5, 0.5)))
+ggplot(est_sens, aes(x=sens, y=lr)) + geom_line() + 
+  geom_abline(intercept = 2.0, slope=0, colour="red")
+```
+
+In this case, even with perfect sensitivity, there is no circumstance which gives us the desired confidence that $LR_P > 2.0$.  The researchers would need to be made aware and encouraged to either adjust their expectations for the study or admit to the limitations imposed by the sample size.
+
+## 5. Study Design Derivations
+The following sections show how to solve the following formula for $n$ with equally sized disease and non-disease groups, for $n_h$ when the groups have unequal sizes, and $\alpha$.  The results of these proofs give the algorithms used in `interval_lrp` to calculate results.
+
+From the results given by Simel, et al, calculating $LR_P^L$ can be done using:
+$$LR_P^L = exp\Big\{ \ln \frac{s_e}{1-s_p} - z_{\alpha/2} \cdot \sqrt{\frac{1-s_e}{A} + \frac{s_p}{B}}   \Big\}$$
+
+### 5a. Equally Sized Disease and Non-Disease Groups
+Typically, the question researchers ask about the study design is "How many subjects do I need?"  Approaching the question in this manner assumes that we have unlimited subjects at our hands, and we only need to determine the correct number to include in the sample to satisfy the objectives of our research.  
+
+In this derivation, we will show how to determine the sample size provided that $n^* =n_d = n_h$. We start with the formula for the lower confidence limit: 
+
+$$LR_P^L = exp\Big\{ \ln \frac{s_e}{1-s_p} - z_{\alpha/2} \cdot \sqrt{\frac{1-s_e}{A} + \frac{s_p}{B}}   \Big\}$$
+
+
+The values of $n_d$ and $n_h$ can be entered into the previous formula be recognizing that $A = s_e \cdot n-1$ and $B = 1-s_p \cdot n_h$.  This yields the formula
+$$\begin{align}
+LR_P^L &= exp\Big\{ \ln \frac{s_e}{1-s_p} - z_{\alpha/2} \cdot 
+    \sqrt{\frac{1-s_e}{s_e \cdot n_d} + \frac{s_p}{(1-s_p) \cdot{n_h}}}   \Big\}\\
+LR_P^L &= exp\Big\{ \ln \frac{s_e}{1-s_p} - z_{\alpha/2} \cdot 
+    \sqrt{\frac{1-s_e}{s_e \cdot n^*} + \frac{s_p}{(1-s_p) \cdot{n^*}}}   \Big\}\\
+LR_P^L &= exp\Big\{ \ln \frac{s_e}{1-s_p} - z_{\alpha/2} \cdot 
+    \sqrt{\frac{1}{n^*} \big( \frac{1-s_e}{s_e} + \frac{s_p}{(1-s_p)}\big)}   \Big\}\\
+\ln LR_P^L &= \ln \frac{s_e}{1-s_p} - z_{\alpha/2} \cdot 
+    \sqrt{\frac{1}{n^*} \big( \frac{1-s_e}{s_e} + \frac{s_p}{(1-s_p)}\big)}\\
+\ln LR_P^L - \ln \frac{s_e}{1-s_p} &= - z_{\alpha/2} \cdot 
+    \sqrt{\frac{1}{n^*} \big( \frac{1-s_e}{s_e} + \frac{s_p}{(1-s_p)}\big)}\\
+\frac{\ln LR_P^L - \ln \frac{s_e}{1-s_p}}{- z_{\alpha/2}} &= 
+    \sqrt{\frac{1}{n^*} \big( \frac{1-s_e}{s_e} + \frac{s_p}{(1-s_p)}\big)}\\
+\frac{\ln \frac{s_e}{1-s_p} - \ln LR_P^L}{z_{\alpha/2}} &= 
+    \sqrt{\frac{1}{n^*} \big( \frac{1-s_e}{s_e} + \frac{s_p}{(1-s_p)}\big)}\\
+\frac{\big(\ln \frac{s_e}{1-s_p} - \ln LR_P^L\big)^2}{z_{\alpha/2}^2} &= 
+    \frac{1}{n^*} \big( \frac{1-s_e}{s_e} + \frac{s_p}{(1-s_p)}\big)\\
+\frac{\big(\ln \frac{s_e}{1-s_p} - \ln LR_P^L\big)^2}
+       {z_{\alpha/2}^2 \cdot \big( \frac{1-s_e}{s_e} + \frac{s_p}{(1-s_p)}\big)} &= 
+    \frac{1}{n^*} \\
+\frac{z_{\alpha/2}^2 \cdot \big( \frac{1-s_e}{s_e} + \frac{s_p}{(1-s_p)}\big)}
+       {\big(\ln \frac{s_e}{1-s_p} - \ln LR_P^L\big)^2} &= n^* 
+\end{align}$$
+
+And so the total sample size is $2 \cdot n^*$, and $n_d = n_h = n^*$.
+
+### 5b. Unequally Sized Disease and Non-Disease Groups
+The equal sample size condition, however, is probably a rarity, and it would be beneficial to have some way of determining the sample size requirement when $n_d \neq n_h$.  To do this, we want to express $n_d$ in terms of $n_h$.  Supposing we have the conditions set forth in Table 1, we can observe that the rate of disease is 
+$r = n_d / n$ and the no disease rate is $1-r = n_h/n = 1-(n_d/n)$.  Additionally, 
+
+$$
+\begin{align}
+n &= n_d + n_h \\
+n &= \frac{n_d \cdot n_h}{n_h} + n_h\\ 
+n &= \frac{n_d}{n_h} \cdot n_h + n_h\\ 
+n &= \frac{\frac{n_d}{n}}{\frac{n_h}{n}} \cdot n_h + n_h\\
+n &= \frac{r}{1-r} \cdot n_h + n_h\\
+n_d + n_h &= \frac{r}{1-r} \cdot n_h + n_h\\
+n_d &= \frac{r}{1-r} \cdot n_h\\
+\end{align}$$
+
+With this development, we can derive the general sample size formula as follows:
+$$
+\begin{align}
+LR_P^L &= exp \Big\{ \ln \frac{s_e}{1 - s_p} - z_{\alpha/2} \cdot 
+    \sqrt{\frac{1 - s_e}{A} + \frac{s_p}{B}} \Big\}\\
+LR_P^L &= exp \Big\{ \ln \frac{s_e}{1 - s_p} - z_{\alpha/2} \cdot 
+    \sqrt{\frac{1 - s_e}{s_e \cdot n_d} + \frac{s_p}{(1-s_p)\cdot n_h}} \Big\}\\
+LR_P^L &= exp \Big\{ \ln \frac{s_e}{1 - s_p} - z_{\alpha/2} \cdot 
+    \sqrt{\frac{1 - s_e}{s_e \cdot \frac{r}{1-r} \cdot n_h} + \frac{s_p}{(1-s_p)\cdot n_h}} \Big\} \\
+LR_P^L &= exp \Big\{ \ln \frac{s_e}{1 - s_p} - z_{\alpha/2} \cdot 
+    \sqrt{\frac{1}{n_h} \cdot \big( \frac{1 - s_e}{s_e \cdot \frac{r}{1-r}} + \frac{s_p}{(1-s_p)}\big)} \Big\}\\
+\ln LR_P^L &= \ln \frac{s_e}{1 - s_p} - z_{\alpha/2} \cdot 
+    \sqrt{\frac{1}{n_h} \cdot \big(\frac{1 - s_e}{s_e \cdot \frac{r}{1-r}} + \frac{s_p}{(1-s_p)}\big)} \\
+\ln LR_P^L - \ln \frac{s_e}{1 - s_p} &= - z_{\alpha/2} \cdot 
+    \sqrt{\frac{1}{n_h} \cdot \big(\frac{1 - s_e}{s_e \cdot \frac{r}{1-r}} + \frac{s_p}{(1-s_p)}\big)}\\
+\frac{\ln LR_P^L - \ln \frac{s_e}{1 - s_p}}{- z_{\alpha/2} } &= 
+    \sqrt{\frac{1}{n_h} \cdot \big(\frac{1 - s_e}{s_e \cdot \frac{r}{1-r}} + \frac{s_p}{(1-s_p)}\big)} \\
+\frac{\ln \frac{s_e}{1 - s_p} - \ln LR_P^L}{z_{\alpha/2} } &= 
+    \sqrt{\frac{1}{n_h} \cdot \big(\frac{1 - s_e}{s_e \cdot \frac{r}{1-r}} + \frac{s_p}{(1-s_p)}\big)} \\
+\frac{\big( \ln \frac{s_e}{1 - s_p} - \ln LR_P^L \big)}{z_{\alpha/2}^2 } &= 
+    \frac{1}{n_h} \cdot \big(\frac{1 - s_e}{s_e \cdot \frac{r}{1-r}} + \frac{s_p}{(1-s_p)}\big)\\
+\frac{\big( \ln \frac{s_e}{1 - s_p} - \ln LR_P^L \big)}
+                 {z_{\alpha/2}^2 \cdot \big(\frac{1 - s_e}{s_e \cdot \frac{r}{1-r}} + \frac{s_p}{(1-s_p)}\big)} &= 
+    \frac{1}{n_h}\\
+n_h &= 
+    \frac{z_{\alpha/2}^2 \cdot \big(\frac{1 - s_e}{s_e \cdot \frac{r}{1-r}} + \frac{s_p}{(1-s_p)}\big)}
+         {\big( \ln \frac{s_e}{1 - s_p} - \ln LR_P^L \big)}
+\end{align}
+$$
+
+After finding $n_h$, the value of $n_d$ can be found as 
+$$n_d = \frac{r}{1-r} \cdot n_h $$
+
+### 5c. Significance
+$$\begin{align}
+LR_P^L &= exp \Big\{ \ln \frac{s_e}{1 - s_p} - z_{\alpha/2} \cdot 
+    \sqrt{\frac{1 - s_e}{A} + \frac{s_p}{B}} \Big\} \\
+LR_P^L &= exp \Big\{ \ln \frac{s_e}{1 - s_p} - z_{\alpha/2} \cdot 
+    \sqrt{\frac{1 - s_e}{s_e \cdot n_d} + \frac{s_p}{(1-s_p)\cdot n_h}} \Big\} \\
+\ln LR_P^L &= \ln \frac{s_e}{1 - s_p} - z_{\alpha/2} \cdot
+    \sqrt{\frac{1 - s_e}{s_e \cdot n_d} + \frac{s_p}{(1-s_p)\cdot n_h}}\\
+\ln LR_P^L - \ln \frac{s_e}{1 - s_p} &= - z_{\alpha/2} \cdot
+    \sqrt{\frac{1 - s_e}{s_e \cdot n_d} + \frac{s_p}{(1-s_p)\cdot n_h}}\\
+\frac{\ln LR_P^L - \ln \frac{s_e}{1 - s_p}}
+       {\sqrt{\frac{1 - s_e}{s_e \cdot n_d} + \frac{s_p}{(1-s_p)\cdot n_h}}} &= 
+       - z_{\alpha/2} \\
+\Phi^{-1}\Big(\frac{\ln LR_P^L - \ln \frac{s_e}{1 - s_p}}
+       {\sqrt{\frac{1 - s_e}{s_e \cdot n_d} + \frac{s_p}{(1-s_p)\cdot n_h}}}\Big) &= 
+       \Phi^{-1} (- z_{\alpha/2}) \\
+\Phi^{-1}\Big(\frac{\ln LR_P^L - \ln \frac{s_e}{1 - s_p}}
+       {\sqrt{\frac{1 - s_e}{s_e \cdot n_d} + \frac{s_p}{(1-s_p)\cdot n_h}}}\Big) &= 
+       \alpha/2 \\
+2 \cdot \Phi^{-1}\Big(\frac{\ln LR_P^L - \ln \frac{s_e}{1 - s_p}}
+       {\sqrt{\frac{1 - s_e}{s_e \cdot n_d} + \frac{s_p}{(1-s_p)\cdot n_h}}}\Big) &=
+       \alpha 
+\end{align}$$
+
+## 6. References
+David L. Simel, Gregory P. Samsa, and David B. Matchar, "Likelihood Ratios with confidence: sample size estimation for diagnostic test studies," _Journal of Clinical Epidemiology, Vol 44, No 8, pp 763-770, 1991.

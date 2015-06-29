@@ -1,5 +1,10 @@
 #' @name sim_wilcoxon
 #' @export sim_wilcoxon
+#' @importFrom parallel detectCores
+#' @importFrom parallel makeCluster
+#' @importFrom parallel clusterSetRNGStream
+#' @importFrom parallel parSapply
+#' @importFrom parallel stopCluster
 #' 
 #' @title Simulate the Power of a Wilcoxon Rank Sum Test
 #' @description Generates random samples from any two specified distributions
@@ -53,8 +58,7 @@ sim_wilcoxon <- function(n,
                                   seed = NULL,
                                   ncores = 1){
   
-  if (ncores > 1) require(parallel)
-  if (ncores > detectCores()) stop("You requested more cores than are available on the machine.")
+  if (ncores > parallel::detectCores()) stop("You requested more cores than are available on the machine.")
   
   #* Determine the weight proportion
   k <- sapply(weights, function(x) x[1] / sum(x))
@@ -113,10 +117,10 @@ sim_wilcoxon <- function(n,
     .param$power <- sapply(1:nrow(.param), simulate, .param, nsim)
   }
   else{
-    cl <- makeCluster(ncores)
-    if (!is.null(seed)) clusterSetRNGStream(cl, seed)
-    .param$power <- parSapply(cl, 1:nrow(.param), simulate, .param, nsim)
-    stopCluster(cl)
+    cl <- parallel::makeCluster(ncores)
+    if (!is.null(seed)) parallel::clusterSetRNGStream(cl, seed)
+    .param$power <- parallel::parSapply(cl, 1:nrow(.param), simulate, .param, nsim)
+    parallel::stopCluster(cl)
   }
   
   return(.param)

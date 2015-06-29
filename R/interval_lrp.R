@@ -50,22 +50,22 @@
 #'  estimates.  Sample size estimates are provided for the diseased group, the
 #'  non-diseased group, and the total sample size.  Specific fields are:
 #'  \enumerate{
-#'  \item \code{lr}: Lower limit of the confidence interval for the likelihood
-#'    ratio positive.
-#'  \item \code{sens}: Sensitivity of the proposed test.
-#'  \item \code{spec}: Specificity of the proposed test.
-#'  \item \code{disease.rate}: Rate of disease in the study population.
-#'  \item \code{alpha}: Desired significance level.
-#'  \item \code{n1_est}: The estimated (decimal) sample size for the diseased group.
-#'  \item \code{n2_est}: The estimated (decimal) sample size for the 
-#'    non-diseased group.
-#'  \item \code{n_est}: The total estimated (decimal) sample size.  This is 
-#'    the sum of \code{n1_est} and \code{n2_est}.
-#'  \item \code{n1}: The actual (integer) sample size for the diseased group.
-#'  \item \code{n2}: The acutal (integer) sample size for the non-diseased
-#'    group:
-#'  \item \code{n}: The actual total (integer) sample size.  This is the sum
-#'    of \code{n1} and \code{n2}.
+#'  \item \code{lr}{Lower limit of the confidence interval for the likelihood
+#'    ratio positive.}
+#'  \item \code{sens}{Sensitivity of the proposed test.}
+#'  \item \code{spec}{Specificity of the proposed test.}
+#'  \item \code{disease.rate}{Rate of disease in the study population.}
+#'  \item \code{alpha}{Desired significance level.}
+#'  \item \code{n1_est}{The estimated (decimal) sample size for the diseased group.}
+#'  \item \code{n2_est}{The estimated (decimal) sample size for the 
+#'    non-diseased group.}
+#'  \item \code{n_est}{The total estimated (decimal) sample size.  This is 
+#'    the sum of \code{n1_est} and \code{n2_est}.}
+#'  \item \code{n1}{The actual (integer) sample size for the diseased group.}
+#'  \item \code{n2}{The acutal (integer) sample size for the non-diseased
+#'    group}
+#'  \item \code{n}{The actual total (integer) sample size.  This is the sum
+#'    of \code{n1} and \code{n2}.}
 #'  }
 #' 
 #' @author Benjamin Nutter

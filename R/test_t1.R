@@ -1,6 +1,9 @@
 #' @name test_t1
 #' @export test_t1
-#' @import ParameterCheck
+#' @importFrom ArgumentCheck newArgCheck
+#' @importFrom ArgumentCheck addError
+#' @importFrom ArgumentCheck addWarning
+#' @importFrom ArgumentCheck finishArgCheck
 #' 
 #' @title One Sample T-Test Study Planning
 #' @description Calculates the power, sample size, difference of means, 
@@ -85,7 +88,7 @@ test_t1 <- function(delta = NULL, n=NULL, sd=NULL,
   #* 7. n must greater than 1
   #******************************************
   
-  Check <- ParameterCheck::newParamCheck()
+  Check <- ArgumentCheck::newArgCheck()
   
   #* 1. If delta=NULL and mu0 and mu1 are given, delta = mu1-mu0
   if (is.null(delta) & (!is.na(mu0) & !is.na(mu1))){
@@ -150,7 +153,7 @@ test_t1 <- function(delta = NULL, n=NULL, sd=NULL,
                       Check)
   }
 
-  ParameterCheck::finishParamCheck(Check)
+  ArgumentCheck::finishArgCheck(Check)
   
   #******************************************
   #* Output DataFrame

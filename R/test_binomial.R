@@ -1,6 +1,9 @@
 #' @name test_binomial
 #' @export test_binomial
-#' @import ParameterCheck
+#' @importFrom ArgumentCheck newArgCheck
+#' @importFrom ArgumentCheck addError
+#' @importFrom ArgumentCheck addWarning
+#' @importFrom ArgumentCheck finishArgCheck
 #' 
 #' @title Power and Sample Size Analysis for a Binomial Test
 #' @description Determines the sample size, power, null proportion,
@@ -76,92 +79,92 @@ test_binomial <- function(n = NULL, p0 = NULL, p1 = NULL,
   #* 9. lower limit of n_limits must be greater than 1
   #******************************************
     
-  Check <- ParameterCheck::newParamCheck()
+  Check <- ArgumentCheck::newArgCheck()
 
   #* 1. Exactly one of n, p0, p1, power, and alpha may be NULL
   sum_null <- sum(sapply(list(n, p0, p1, power, alpha), is.null))
-  Check <- ParameterCheck::addError(sum_null != 1,
+  Check <- ArgumentCheck::addError(sum_null != 1,
                     "Exactly 1 of n, p0, p1, alpha, or power must be NULL",
                     Check)
   
   #* 2. alpha must be between 0 and 1, exclusive
   if (!is.null(alpha)){
-    Check <- ParameterCheck::addWarning(any(alpha <= 0) | any(alpha >= 1),
+    Check <- ArgumentCheck::addWarning(any(alpha <= 0) | any(alpha >= 1),
                         "'alpha' must be between 0 and 1, exclusive.  Invalid values have been removed.",
                         Check)
     alpha <- alpha[alpha > 0 & alpha < 1]
-    Check <- ParameterCheck::addError(length(alpha) == 0,
+    Check <- ArgumentCheck::addError(length(alpha) == 0,
                       "No valid values were given for 'alpha'",
                       Check)
   }
   
   #* 3. power must be between 0 and 1, exclusive
   if (!is.null(power)){
-    Check <- ParameterCheck::addWarning(any(power <= 0) | any(power >= 1),
+    Check <- ArgumentCheck::addWarning(any(power <= 0) | any(power >= 1),
                         "'power' must be between 0 and 1, exclusive.  Invalid values have been removed.",
                         Check)
     power <- power[power > 0 & power < 1]
-    Check <- ParameterCheck::addError(length(power) == 0,
+    Check <- ArgumentCheck::addError(length(power) == 0,
                       "No valid values were given for 'power'",
                       Check)
   }
   
   #* 4. p0 must be between 0 and 1, exclusive
   if (!is.null(p0)){
-    Check <- ParameterCheck::addWarning(any(p0 <= 0) | any(p0 >= 1),
+    Check <- ArgumentCheck::addWarning(any(p0 <= 0) | any(p0 >= 1),
                         "'p0' must be between 0 and 1, exclusive.  Invalid values have been removed.",
                         Check)
     p0 <- p0[p0 > 0 & p0 < 1]
-    Check <- ParameterCheck::addError(length(p0) == 0,
+    Check <- ArgumentCheck::addError(length(p0) == 0,
                       "No valid values were given for 'p0'",
                       Check)
   }
   
   #* 5. p1 must be between 0 and 1, exclusive
   if (!is.null(p1)){
-    Check <- ParameterCheck::addWarning(any(p1 <= 0) | any(p1 >= 1),
+    Check <- ArgumentCheck::addWarning(any(p1 <= 0) | any(p1 >= 1),
                         "'p1' must be between 0 and 1, exclusive.  Invalid values have been removed.",
                         Check)
     p1 <- p1[p1 > 0 & p1 < 1]
-    Check <- ParameterCheck::addError(length(p1) == 0,
+    Check <- ArgumentCheck::addError(length(p1) == 0,
                       "No valid values were given for 'p1'",
                       Check)
   }
   
   #* 6. n must greater than 1
   if (!is.null(n)){
-    Check <- ParameterCheck::addWarning(any(n <= 0),
+    Check <- ArgumentCheck::addWarning(any(n <= 0),
                         "'n' must be larger than 1.  Invalid values have been removed.",
                         Check)
     n <- n[n > 1]
-    Check <- ParameterCheck::addError(length(n) == 0,
+    Check <- ArgumentCheck::addError(length(n) == 0,
                       "No valid values were given for 'n'",
                       Check)
   }
   
   #* 7. alternative must be in c('two.tailed', 'left.tailed', 'right.tailed')
   
-  Check <- ParameterCheck::addError(!all(alternative %in% c("two.tailed", "left.tailed", 
+  Check <- ArgumentCheck::addError(!all(alternative %in% c("two.tailed", "left.tailed", 
                                             "right.tailed")),
                     paste0("Values in 'alternative' must be ",
                            "'two.tailed', 'left.tailed', or 'right.tailed'"),
                     Check)
   
   #* 8. coerce n_limits to integer
-  Check <- ParameterCheck::addWarning(!is.integer(n_limits),
+  Check <- ArgumentCheck::addWarning(!is.integer(n_limits),
                       "n_limits has been coerced to an integer vector",
                       Check)
   
   #* 9. lower limit of n_limits must be greater than 1
   n_limits <- sort(n_limits)
-  Check <- ParameterCheck::addWarning(n_limits[1] <= 1,
+  Check <- ArgumentCheck::addWarning(n_limits[1] <= 1,
                       "The minimum for n_limits has been increased to 2",
                       Check)
   if (n_limits[1] <= 1) n_limits[1] <- 2
   n_limits <- n_limits[1]:n_limits[2]
   
   #* Pass errors and warnings
-  ParameterCheck::finishParamCheck(Check)
+  ArgumentCheck::finishArgCheck(Check)
 
   
   #*****************************************

@@ -1,5 +1,9 @@
 #' @name test_p2
 #' @export test_p2
+#' @importFrom ArgumentCheck newArgCheck
+#' @importFrom ArgumentCheck addError
+#' @importFrom ArgumentCheck addWarning
+#' @importFrom ArgumentCheck finishArgCheck
 #' 
 #' @title Power for a Two Sample Test of Proportions Using the Normal Approximation
 #' @description The two sample test of proportions based on the normal approximation 
@@ -9,8 +13,7 @@
 #'   This may also be interpreted as the difference under the alternative hypothesis.
 #' @param n The total sample size between the two groups.  Unequal sample sizes
 #'   may be accommodated using the \code{weights} argument.
-#' @param sd The standard error of the difference of proportions.  This is the
-#'   value represented by s* in the references.
+#' @param pbar Theh average proportion.
 #' @param alpha The significance level for the test.
 #' @param power The power of the test.
 #' @param delta0 The difference of proportions under the null hypothesis.  Typically,
@@ -49,7 +52,7 @@ test_p2 <- function(delta=NULL, n=NULL, pbar=NULL, alpha=.05,
   #* 5. alpha , power, p1_null, p2_null, p1_alt, p2_alt must be between 0 and 1, exclusive
   #* 6. x1, n1, x2, n2 must be positive integers
   
-  Check <- ParameterCheck::newParamCheck()
+  Check <- ArgumentCheck::newArgCheck()
   
   #* 1. If delta=NULL; and p1_alt and p2_alt are both missing, set delta_check=NA
   #*    delta_check will be used to determine if the check in #4 is valid
@@ -68,68 +71,68 @@ test_p2 <- function(delta=NULL, n=NULL, pbar=NULL, alpha=.05,
   
   #* 4. Exactly one of delta_check, n, pbar_check, alpha, power, and delta0_check must be NULL
   sum_null <- sum(sapply(list(delta_check, n, pbar_check, alpha, power, delta0_check), is.null))
-  Check <- ParameterCheck::addError(sum_null != 1,
+  Check <- ArgumentCheck::addError(sum_null != 1,
                                     paste0("Exactly 1 of delta*, n, pbar*, alpha, power, or delta0* must be NULL\n",
                                            "    *(or an equivalent)"),
                                     Check)
   
   #* 5. alpha , power, p1_null, p2_null, p1_alt, p2_alt must be between 0 and 1, exclusive
   if (!is.null(alpha)){
-    Check <- ParameterCheck::addWarning(any(alpha <= 0) | any(alpha >= 1),
+    Check <- ArgumentCheck::addWarning(any(alpha <= 0) | any(alpha >= 1),
                                         "'alpha' must be between 0 and 1, exclusive.  Invalid values have been removed.",
                                         Check)
     alpha <- alpha[alpha > 0 & alpha < 1]
-    Check <- ParameterCheck::addError(length(alpha) == 0,
+    Check <- ArgumentCheck::addError(length(alpha) == 0,
                                       "No valid values were given for 'alpha'",
                                       Check)
   }
 
   if (!is.null(power)){
-    Check <- ParameterCheck::addWarning(any(power <= 0) | any(power >= 1),
+    Check <- ArgumentCheck::addWarning(any(power <= 0) | any(power >= 1),
                                         "'power' must be between 0 and 1, exclusive.  Invalid values have been removed.",
                                         Check)
     power <- power[power > 0 & power < 1]
-    Check <- ParameterCheck::addError(length(power) == 0,
+    Check <- ArgumentCheck::addError(length(power) == 0,
                                       "No valid values were given for 'power'",
                                       Check)
   }
 
   if (!missing(p1_null)){
-    Check <- ParameterCheck::addWarning(any(p1_null <= 0) | any(p1_null >= 1),
+    Check <- ArgumentCheck::addWarning(any(p1_null <= 0) | any(p1_null >= 1),
                                         "'p1_null' must be between 0 and 1, exclusive.  Invalid values have been removed.",
                                         Check)
     p1_null <- p1_null[p1_null > 0 & p1_null < 1]
-    Check <- ParameterCheck::addError(length(p1_null) == 0,
+    Check <- ArgumentCheck::addError(length(p1_null) == 0,
                                       "No valid values were given for 'p1_null'",
                                       Check)
   }
 
   if (!missing(p1_alt)){
-    Check <- ParameterCheck::addWarning(any(p1_alt <= 0) | any(p1_alt >= 1),
+    Check <- ArgumentCheck::addWarning(any(p1_alt <= 0) | any(p1_alt >= 1),
                                         "'p1_alt' must be between 0 and 1, exclusive.  Invalid values have been removed.",
                                         Check)
     p1_alt <- p1_alt[p1_alt > 0 & p1_alt < 1]
-    Check <- ParameterCheck::addError(length(p1_alt) == 0,
+    Check <- ArgumentCheck::addError(length(p1_alt) == 0,
                                       "No valid values were given for 'p1_alt'",
                                       Check)
   }
 
   if (!missing(p2_null)){
-    Check <- ParameterCheck::addWarning(any(p2_null <= 0) | any(p2_null >= 1),
+    Check <- ArgumentCheck::addWarning(any(p2_null <= 0) | any(p2_null >= 1),
                                         "'p2_null' must be between 0 and 1, exclusive.  Invalid values have been removed.",
                                         Check)
     p2_null <- p2_null[p2_null > 0 & p2_null < 1]
-    Check <- ParameterCheck::addError(length(p2_null) == 0,
+    Check <- ArgumentCheck::addError(length(p2_null) == 0,
                                       "No valid values were given for 'p2_null'",
                                       Check)
   }
   
   if (!missing(p2_alt)){
-    Check <- ParameterCheck::addWarning(any(p2_alt <= 0) | any(p2_alt >= 1),
+    Check <- ArgumentCheck::addWarning(any(p2_alt <= 0) | any(p2_alt >= 1),
                                         "'p2_alt' must be between 0 and 1, exclusive.  Invalid values have been removed.",
                                         Check)
     p2_alt <- p2_alt[p2_alt > 0 & p2_alt < 1]
-    Check <- ParameterCheck::addError(length(p2_alt) == 0,
+    Check <- ArgumentCheck::addError(length(p2_alt) == 0,
                                       "No valid values were given for 'p2_alt'",
                                       Check)
   }
@@ -138,50 +141,50 @@ test_p2 <- function(delta=NULL, n=NULL, pbar=NULL, alpha=.05,
   #* 6. x1, n1, x2, n2 must be positive integers
   if (!missing(x1)){
     if (!is.integer(x1)) x1 <- as.integer(x1)
-    Check <- ParameterCheck::addWarning(any(x1 <= 0),
+    Check <- ArgumentCheck::addWarning(any(x1 <= 0),
                                         "'x1' must be a positive integer.",
                                         Check)
     x1 <- x1[x1 > 0]
-    Check <- ParameterCheck::addError(length(x1) == 0,
+    Check <- ArgumentCheck::addError(length(x1) == 0,
                                       "No valid values were given for 'x1'",
                                       Check)
   }
   
   if (!missing(n1)){
     if (!is.integer(n1)) n1 <- as.integer(n1)
-    Check <- ParameterCheck::addWarning(any(n1 <= 0),
+    Check <- ArgumentCheck::addWarning(any(n1 <= 0),
                                         "'n1' must be a positive integer.",
                                         Check)
     n1 <- n1[n1 > 0]
-    Check <- ParameterCheck::addError(length(n1) == 0,
+    Check <- ArgumentCheck::addError(length(n1) == 0,
                                       "No valid values were given for 'n1'",
                                       Check)
   }
   
   if (!missing(x2)){
     if (!is.integer(x2)) x2 <- as.integer(x2)
-    Check <- ParameterCheck::addWarning(any(x2 <= 0),
+    Check <- ArgumentCheck::addWarning(any(x2 <= 0),
                                         "'x2' must be a positive integer.",
                                         Check)
     x2 <- x2[x2 > 0]
-    Check <- ParameterCheck::addError(length(x2) == 0,
+    Check <- ArgumentCheck::addError(length(x2) == 0,
                                       "No valid values were given for 'x2'",
                                       Check)
   }
   
   if (!missing(n2)){
     if (!is.integer(n2)) n2 <- as.integer(n2)
-    Check <- ParameterCheck::addWarning(any(n2 <= 0),
+    Check <- ArgumentCheck::addWarning(any(n2 <= 0),
                                         "'n2' must be a positive integer.",
                                         Check)
     n2 <- n2[n2 > 0]
-    Check <- ParameterCheck::addError(length(n2) == 0,
+    Check <- ArgumentCheck::addError(length(n2) == 0,
                                       "No valid values were given for 'n2'",
                                       Check)
   }
   
   #* Pass errors and warnings
-  ParameterCheck::finishParamCheck(Check)  
+  ArgumentCheck::finishArgCheck(Check)  
   
   #* Create estimates of null difference from preliminary values
   prelim_delta0 <- all(!c(missing(p1_null), missing(p2_null)))

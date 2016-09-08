@@ -48,13 +48,24 @@
 
 
 interval_t1 <- function(E=NULL, n=NULL, s=NULL, alpha=.05,
-                              optim.max = 1000000000){
+                        two_tail = TRUE,
+                        interval_min = NULL,
+                        interval_max = NULL){
   
-  err.flag <- 0
-  err.msg <- ""
+  coll <- checkmate::makeAssertCollection()
   
-  warn.flag <- 0
-  warn.msg <- ""
+  #* The names assigned to this list will be useful later 
+  #* when the parameters are estimated.  They are 
+  #* assigned here rather than renaming them later.
+  plan_args <- list(E = E, 
+                    n_est = n, 
+                    s = s, 
+                    alpha_calc = alpha)
+  
+  which_null <-
+    vapply(X = plan_args,
+           FUN = is.null,
+           FUN.VALUE = logical(1))
   
   #*******************************************************
   #* Parameter checks
@@ -65,119 +76,145 @@ interval_t1 <- function(E=NULL, n=NULL, s=NULL, alpha=.05,
   #* 3b. Must be at least one valid value of s
   #* 4a. E must be a positive number
   #* 4b. Must be at least one valid value for E
+  #* 5.  two_tail must be logical
   #*******************************************************
   
   #* 1.  only one of E, n, s, alpha may be NULL (error)
-  if (sum(sapply(list(E, n, s, alpha), is.null)) != 1){
-    err.flag <- err.flag + 1
-    err.msg <- c(err.msg,
-                 paste(err.flag, ": Exactly one of E, n, s, and alpha may be NULL"))
+  
+  if (sum(which_null) != 1)
+  {
+    coll$add("Exactly one of `E`, `n`, `s`, and `alpha` may be NULL")
   }
 
   #* 2a. for alpha, 0 < alpha < 1 (warning)
-  if (any(alpha <= 0 | alpha >=1)){
-    warn.flag <- warn.flag + 1
-    warn.msg <- c(warn.msg,
-                  paste(warn.msg, ": alpha must be between 0 and 1, exclusive."))
+  if (any(alpha <= 0 | alpha >=1))
+  {
+    warning("`alpha` must be between 0 and 1, exclusive. Invalid values were removed")
     
     alpha <- alpha[alpha > 0 & alpha < 1]
     
     #* 2b. Must be at least one valid value of alpha 
     #*     (only applies when alpha is not NULL)
-    if (length(alpha) == 0){
-      err.flag <- err.flag + 1
-      err.msg <- c(err.msg,
-                   paste(err.flag, ": no valid values for alpha were given."))
+    if (!length(alpha))
+    {
+      coll$add("No valid values for `alpha` were given")
     }
   }
 
   #* 3a. s must be a positive number
-  if (any(s <= 0)){
-    warn.flag <- warn.flag + 1
-    warn.msg <- c(warn.msg,
-                  paste(warn.msg, ": s must be a positive number.  Non positive numbers were removed"))
+  if (any(s <= 0))
+  {
+    warning("`s` must be a positive number.  Non positive numbers were removed")
     s <- s[s > 0]
     
     #* 3b. Must be at least one valid value of s
-    if (length(s) == 0){
-      err.flag <- err.flag + 1
-      err.msg <- c(err.msg,
-                   paste(err.msg, ": No valid values for s were given."))
+    if (!length(s))
+    {
+      coll$add("No valid values for `s` were given")
     }
   }
 
   #* 4a. E must be a positive number
-  if (any(E <= 0)){
-    warn.flag <- warn.flag + 1
-    warn.msg <- c(warn.msg,
-                  paste(warn.msg, ": E must be a positive number.  Non positive numbers were removed"))
+  if (any(E <= 0))
+  {
+    warning("`E` must be a positive number.  Non positive numbers were removed")
+    
     E <- E[E > 0]
     
     #* 4b. Must be at least one valid value for E
-    if (length(E) == 0){
-      err.flag <- err.flag + 1
-      err.msg <- c(err.msg,
-                   paste(err.msg, ": No valid values for E were given."))
+    if (length(E) == 0)
+    {
+      coll$add("No valid values for E were given.")
     }
   }
   
-  #* Print warnings and errors
-  if (warn.flag){
-    warning(paste(warn.msg, collapse="\n")) 
+  #* 5. two_tail must be logical
+  checkmate::assert_logical(x = two_tail,
+                            add = coll)
+  
+  #* Print errors
+  checkmate::reportAssertions(coll)
+  
+  #* Make the function for use in uniroot
+  plan_fn <- function()
+  {
+    E - qt(alpha_calc, n_est-1, lower.tail = FALSE) * s / sqrt(n_est)
   }
   
-  if (err.flag) {
-    stop(paste(err.msg, collapse="\n"))
+  #* Assigning the formals in such a way that the missing (NULL) argument is first.
+  formals(plan_fn) <-  c(plan_args[which_null], plan_args[!which_null])
+  
+  #* Create the data frame for storing the results
+  .params <- 
+    expand.grid(
+      n_est = if (is.null(n)) NA else n,
+      E = if (is.null(E)) NA else E,
+      s = if (is.null(s)) NA else s,
+      alpha = if (is.null(alpha)) NA else alpha,
+      two_tail = two_tail
+    ) %>%
+    dplyr::mutate(alpha_calc = alpha / (two_tail + 1))
+  
+  #* Set default limits.  
+  #* For minimum, lower limit is 2 for n_est, 0 otherwise
+  if (is.null(interval_min))
+  {
+    interval_min <- 
+      switch(
+        names(plan_args)[which_null],
+        "n_est" = 2,
+        0 #default value
+      )
   }
   
-  #* Solve for n
-  if (is.null(n)){
-    .param <- expand.grid(n_est = NA,
-                          n = NA,
-                          E = E,
-                          s = s,
-                          alpha = alpha)  
-    fn <- function(n, E, s, alpha) (qt(1-alpha/2, n-1)^2 * s^2 / E^2 - n)^2
-    
-    for (i in 1:nrow(.param)){
-      .param$n_est[i] <- with(.param,
-                          optimize(function(n) (qt(1-alpha[i]/2, n-1)^2 * s[i]^2 / E[i]^2 - n)^2,
-                                   c(0, optim.max))$minimum)
-    }
-    .param$n <- ceiling(.param$n_est)
-    return(.param)
+  #* For maximum, upper limit is 1 for alpha_calc, 1e8 otherwise
+  if (is.null(interval_max))
+  {
+    interval_max <- 
+      switch(
+        names(plan_args)[which_null],
+        "alpha_calc" = 1,
+        1e8
+      )
   }
   
-  #* Solve for E
-  if (is.null(E)){
-    .param <- expand.grid(n_est = n,
-                          n = n,
-                          E = NA,
-                          s = s,
-                          alpha = alpha) 
-    .param$E <- with(.param,
-                     qt(1-alpha/2, n-1) * s / sqrt(n))
+  #* Estimate the missing parameter
+  .params[[names(plan_args)[which_null]]] <- 
+    mapply(
+      uniroot,
+      .params[[names(plan_args)[!which_null][1]]],
+      .params[[names(plan_args)[!which_null][2]]],
+      .params[[names(plan_args)[!which_null][3]]],
+      MoreArgs = list(f = plan_fn,
+                      interval = c(interval_min, interval_max)),
+      SIMPLIFY = FALSE
+    ) %>%
+    vapply(FUN = function(x) x[["root"]],
+           FUN.VALUE = numeric(1))
+  
+  #* uniroot calculates alpha/2 for two_tail tests.  
+  #* If alpha was the missing parameter, it needs to be transformed
+  #* to the complete value of alpha
+  if (is.null(alpha))
+  {
+    .params[["alpha"]] <- .params[["alpha_calc"]] * (.params[["two_tail"]] + 1)
   }
   
-  #* Solve for s
-  if (is.null(s)){
-    .param <- expand.grid(n_est = n,
-                          n = n,
-                          E = E,
-                          s = NA,
-                          alpha = alpha) 
-    .param$s <- with(.param, E * sqrt(n) / qt(1-alpha/2, n-1))
+  #* If n was the missing parameter, it is the floor of n_est
+  #* otherwise it is the same as n_est
+  if (is.null(n))
+  {
+    .params[["n"]] <- floor(.params[["n_est"]])
+  }
+  else
+  {
+    .params[["n"]] <- .params[["n_est"]]
   }
   
-  #* Solve for alpha
-  if (is.null(alpha)){
-    .param <- expand.grid(n_est = n,
-                          n = n,
-                          E = E,
-                          s = s,
-                          alpha = NA) 
-    .param$alpha <- with(.param, 2 * (1 - pt(E * sqrt(n) / s, n-1)))
-  }
-  
-  return(.param)
+  .params[c("n_est", "n", "E", "s", "alpha", "two_tail")]
 }  
+
+interval_t1(n = c(800, 900),
+            E = c(.02616808, .03), 
+            alpha = NULL, # alpha = 0.05, 
+            s = c(0.4, 0.5, 0.6))

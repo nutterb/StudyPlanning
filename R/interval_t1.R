@@ -9,12 +9,18 @@
 #'     
 #'     The t-based confidence interval is commonly used in estimating
 #'     population mean using sample data.  It is based on Student's t 
-#'     distribution, an adaptation of the standard normal distribution.  
+#'     distribution, an adaptation of the standard normal distribution for
+#'     cases when the population standard deviation is not known.  
 #' 
 #' @param E Margin of error (\code{E} > 0)
 #' @param n Sample size (\code{n > 1})
 #' @param s Sample standard deviation (\code{s > 0})
-#' @param alpha Significance level (or 1-confidence; \code{0 < alpha < 1})
+#' @param alpha Significance level (or 1-confidence; \code{0 < alpha < 1}). For 
+#'   convenience, it is permitted to pass values such as \code{seq(0, 1, by = 0.1)}.
+#'   Strictly speaking, \code{0} and \code{1} are not on the interval (0, 1), but 
+#'   they are removed with a message prior to the argument validation. (Note: this 
+#'   could potentially result in an error on the assertion that \code{alpha} have
+#'   at length >= 1, if, for example, \code{alpha = c(0, 1)}) 
 #' @param two_tail Logical values indicating if the interval is one or two tailed.
 #' @param interval_min The minimum value for the search interval in 
 #'   \code{uniroot}.  If \code{NULL}, a default value will be chosen based on the 
@@ -22,11 +28,6 @@
 #' @param interval_max The maximum value for the search interval in 
 #'   \code{uniroot}.  If \code{NULL}, a default value will be chosen based on the
 #'   NULL study parameter.  See Default Interval Limits.
-#' @param cl A parallel computing cluster object that inherits class \code{cluster}.
-#'   When \code{NULL}, estimation is done using \code{mapply}, otherwise 
-#'   \code{clusterMap} is used. 
-#' @param ncores An integerish value designating the number of cores to use in a 
-#'   parallel cluster.  Ignored if \code{cl} is not \code{NULL}.
 #' 
 #' @details Exactly one of the parameters \code{n}, \code{E}, \code{s} and 
 #' \code{alpha} must be passed as \code{NULL}, and that parameter will be 
@@ -38,36 +39,31 @@
 #' 
 #' \deqn{E = t(alpha, n-1) * s / \sqrt{n}}
 #' 
-#' Support is provided for parallel computation, but its use is not recommended. 
-#' My benchmarking of the serial vs parallel computation shows that serial 
-#' computation is about 8.75 times faster than parallel computation on four 
-#' processors.
-#' 
 #' @section Default Interval Limits:
+#' 
 #' \tabular{ccc}{
 #'   Study Parameter \tab Lower Limit \tab Upper Limit \cr
-#'   \code{E}        \tab 0           \tab 1e8         \cr
-#'   \code{n}        \tab 2           \tab 1e8         \cr
-#'   \code{s}        \tab 0           \tab 1e8         \cr 
-#'   \code{alpha}    \tab 0           \tab 1
+#'   \code{E}        \tab \code{0}    \tab \code{1e8}  \cr
+#'   \code{n}        \tab \code{2}    \tab \code{1e8}  \cr
+#'   \code{s}        \tab \code{0}    \tab \code{1e8}  \cr 
+#'   \code{alpha}    \tab \code{0}    \tab \code{1}
 #' }
+#' 
+#' The need for using limits other than the default ought to be rare.  The only
+#' purpose for doing so would be to reduce the computational time required
+#' to find a solution via \code{uniroot}. But \code{uniroot} is already quite 
+#' efficient. Be warned that no validations are performed on the user supplied 
+#' interval limits to confirm that the limits are within the domains of each 
+#' study parameter.
 #' 
 #' @section Functional Requirements:
 #' \enumerate{
 #'   \item{Accepts values of \code{E} greater than 0}
-#'   \item{Remove non-positive values from \code{E} with a warning}
-#'   \item{Cast an error if \code{E} has no positive values.}
-#'   \item{Accepts integerish values of \code{n} greater than 1}
-#'   \item{Remove values less than 2 from \code{n} with a warning}
-#'   \item{Cast an error if \code{n} has no suitable values.}
+#'   \item{Accepts integerish values of \code{n} greater than or equal to 2}
 #'   \item{Accepts values of \code{s} greater than 0}
-#'   \item{Remove non-positive values from \code{s} with a warning}
-#'   \item{Cast an error if \code{s} has no positive values.}
 #'   \item{Accepts values of \code{alpha} between 0 and 1}
-#'   \item{Remove values less than 0 or greater than 1 from 
-#'              \code{alpha} with a warning}
-#'   \item{Cast an error if \code{alpha} has no suitable values.}
 #'   \item{Permit one and two tail interval calculations}
+#'   \item{The missing study parameter is calculated correctly.}
 #' }
 #' 
 #' @return A data frame with six columns
@@ -86,151 +82,195 @@
 #' 
 #' @author Benjamin Nutter
 #' 
+#' @examples 
+#' 
+#' # Use Student's sleep data, group 1
+#' data(sleep)
+#' 
+#' student_E <- 
+#'   (sleep$extra[sleep$group == 1] %>%
+#'   t.test %$%
+#'   conf.int %>%
+#'   diff) / 2
+#' student_s <- sd(sleep$extra[sleep$group == 1])
+#' 
+#' # Calculate the margin of error 
+#' 
+#' interval_t1(E = NULL,
+#'             s = student_s,
+#'             n = 10,
+#'             alpha = 0.05,
+#'             two_tail = TRUE)
+#'             
+#' # Calculate sample size for two different significance levels
+#' interval_t1(E = student_E,
+#'             s = student_s,
+#'             alpha = c(0.05, 0.10),
+#'             two_tail = TRUE)
+#'             
+#' # Calculate sample size over a range of margins of error
+#' # and with two significance levels
+#' (SampleSize <- 
+#'   interval_t1(E = seq(1.0, 2.0, by = 0.01),
+#'               s = student_s,
+#'               alpha = c(0.05, 0.10),
+#'               two_tail = TRUE))
+#'             
+#' library(ggplot2)
+#' ggplot(data = SampleSize,
+#'        mapping = aes(x = E,
+#'                      y = n_est,
+#'                      colour = factor(alpha))) + 
+#'   geom_line()
+#' 
 #' @export 
 
-interval_t1 <- function(E=NULL, n=NULL, s=NULL, alpha=.05,
+interval_t1 <- function(E=NULL, s=NULL, n=NULL, alpha=.05,
                         two_tail = TRUE,
                         interval_min = NULL,
-                        interval_max = NULL,
-                        cl = NULL, ncores = NULL){
-  
-  coll <- checkmate::makeAssertCollection()
+                        interval_max = NULL)
+{
   
   #* The names assigned to this list will be useful later 
   #* when the parameters are estimated.  They are 
   #* assigned here rather than renaming them later.
   plan_args <- list(E = E, 
-                    n_est = n, 
                     s = s, 
+                    n_est = n,
                     alpha_calc = alpha)
   
+  #* Provide a logical vector indicating which of the study parameters are NULL.
+  #* In the argument checks, this helps cast the error if the sum is not TRUE.
+  #* It is used later to determine the formal arguments to the function passed
+  #* to uniroot
   which_null <-
     vapply(X = plan_args,
            FUN = is.null,
            FUN.VALUE = logical(1))
   
   #*******************************************************
-  #* Parameter checks
-  #* 1.  only one of E, n, s, alpha may be NULL (error)
-  #* 2a. for alpha, 0 < alpha < 1 (warning)
-  #* 2b. Must be at least one valid value of alpha
-  #* 3a. s must be a positive number
-  #* 3b. Must be at least one valid value of s
-  #* 4a. E must be a positive number
-  #* 4b. Must be at least one valid value for E
-  #* 5.  two_tail must be logical
+  #* Argument checks
+  #* 1. only one of E, n, s, alpha may be NULL
+  #* 2. E must be on the interval (0, Inf)
+  #* 3. n must be integerish on the interval [2, Inf)
+  #* 4. s must be on the interval (0, Inf)
+  #* 5. alpha must be on the interval (0, 1)
+  #* 6.  two_tail must be logical
   #*******************************************************
   
-  #* 1.  only one of E, n, s, alpha may be NULL (error)
+  coll <- checkmate::makeAssertCollection()
   
+  #* 1.  only one of E, n, s, alpha may be NULL (error)
   if (sum(which_null) != 1)
   {
     coll$add("Exactly one of `E`, `n`, `s`, and `alpha` may be NULL")
   }
-
-  #* 2a. for alpha, 0 < alpha < 1 (warning)
-  if (any(alpha <= 0 | alpha >=1))
+  
+  #* 2. E must be on the interval (0, Inf)
+  if (!is.null(E))
   {
-    warning("`alpha` must be between 0 and 1, exclusive. Invalid values were removed")
-    
-    alpha <- alpha[alpha > 0 & alpha < 1]
-    
-    #* 2b. Must be at least one valid value of alpha 
-    #*     (only applies when alpha is not NULL)
-    checkmate::assert_numeric(x = alpha,
-                              lower = 0,
-                              upper = 1,
-                              min.len = 1,
-                              add = coll)
-  }
-
-  #* 3a. s must be a positive number
-  if (any(s <= 0))
-  {
-    warning("`s` must be a positive number.  Non positive numbers were removed")
-    s <- s[s > 0]
-    
-    #* 3b. Must be at least one valid value of s
-    checkmate::assert_numeric(x = s,
-                              lower = 0,
-                              min.len = 1,
-                              add = coll)
-  }
-
-  #* 4a. E must be a positive number
-  if (any(E <= 0))
-  {
-    warning("`E` must be a positive number.  Non positive numbers were removed")
-    
-    E <- E[E > 0]
-    
-    #* 4b. Must be at least one valid value for E
     checkmate::assert_numeric(x = E,
                               lower = 0,
                               min.len = 1,
                               add = coll)
   }
   
-  #* 5. two_tail must be logical
-  checkmate::assert_logical(x = two_tail,
-                            add = coll)
-  
-  #* 6. n must be greater than 1
-  if (any(n < 2))
+  #* 3. s must be on the interval (0, Inf)
+  if (!is.null(s))
   {
-    warning("`n` must be greater than or equal to 2. Smaller values were removed")
-    n <- n[n < 2]
-    
+    checkmate::assert_numeric(x = s,
+                              lower = 0,
+                              min.len = 1,
+                              add = coll)
+  }
+  
+  #* 4. n must be integerish on the interval [2, Inf)
+  if (!is.null(n))
+  {
     checkmate::assert_integerish(x = n,
                                  lower = 2,
                                  min.len = 1,
                                  add = coll)
   }
   
-  #* 7. cl inherits class cluster
-  if (!is.null(cl))
+  #* 5. alpha must be on the interval (0, 1)
+  if (!is.null(alpha))
   {
-    checkmate::assert_class(x = cl,
-                            classes = "cluster",
-                            add = coll)
+    if (any(alpha %in% c(0, 1)))
+    {
+      alpha <- alpha[!alpha %in% c(0, 1)]
+      message("`alpha` only accepts values on the interval (0, 1). ",
+              "Values equal to 0 or 1 have been removed. ",
+              "(This could affect the argument validation)")
+    }
+    checkmate::assert_numeric(x = alpha,
+                              lower = 0,
+                              upper = 1,
+                              min.len = 1,
+                              add = coll)
   }
   
-  #* 8. ncores is integerish
-  if (!is.null(ncores))
-  {
-    checkmate::assert_integerish(x = ncores,
-                                 len = 1,
-                                 lower = 1,
-                                 upper = parallel::detectCores(),
-                                 add = coll)
-  }
+  #* 6 two_tail must be logical
+  checkmate::assert_logical(x = two_tail,
+                            min.len = 1,
+                            add = coll)
   
   #* Print errors
   checkmate::reportAssertions(coll)
   
-  if (is.null(cl))
+  #******************************************************
+  #* Assign additional defaults
+  #* 1. Default interval minimum
+  #* 2. Default interval maximum
+  #******************************************************
+  
+  #* Default interval minimum
+  if (is.null(interval_min))
   {
-    if (!is.null(ncores))
-    {
-      cl <- parallel::makeCluster(ncores)
-      parallel::clusterEvalQ(cl = cl, library(StudyPlanning))
-      on.exit(parallel::stopCluster(cl))
-    }
+    interval_min <- 
+      switch(
+        EXPR = names(plan_args)[which_null],
+        n_est = 2,
+        0    # default value for everything other than n_est
+      )
   }
   
-  #* Make the function for use in uniroot
+  #* Default interval maximum
+  if (is.null(interval_max))
+  {
+    interval_max <- 
+      switch(
+        EXPR = names(plan_args)[which_null],
+        alpha_calc = 1,
+        1e8    # default value for everything other than alpha_calc
+      )
+  }
+  
+  #******************************************************
+  #* Study Parameter Estimating Function
+  #* 1. Estimating Function
+  #* 2. Assign formal arguments
+  #******************************************************
+  
+  #* 1. Estimating Function
   plan_fn <- function()
   {
     E - qt(alpha_calc, n_est-1, lower.tail = FALSE) * s / sqrt(n_est)
   }
   
-  #* Assigning the formals in such a way that the missing (NULL) argument is first.
+  #* 2. Assign formala arguments. 
+  #*    The NULL study parameter has to be first, and then the remaining 
+  #*    parameters are assumed to come in the order listed in the arguments
+  #*    of interval_t1.
   formals(plan_fn) <-  c(plan_args[which_null], plan_args[!which_null])
   
+  #******************************************************
   #* Create the data frame for storing the results
+  #******************************************************
+  
   .params <- 
     expand.grid(
-      n_est = if (is.null(n)) NA else n,
+      n_est = if (is.null(n)) NA else n, #* integerish n is calculated later.
       E = if (is.null(E)) NA else E,
       s = if (is.null(s)) NA else s,
       alpha = if (is.null(alpha)) NA else alpha,
@@ -238,56 +278,31 @@ interval_t1 <- function(E=NULL, n=NULL, s=NULL, alpha=.05,
     ) %>%
     dplyr::mutate(alpha_calc = alpha / (two_tail + 1))
   
-  #* Set default limits.  
-  #* For minimum, lower limit is 2 for n_est, 0 otherwise
-  if (is.null(interval_min))
-  {
-    interval_min <- 
-      switch(
-        names(plan_args)[which_null],
-        "n_est" = 2,
-        0 #default value
-      )
-  }
-  
-  #* For maximum, upper limit is 1 for alpha_calc, 1e8 otherwise
-  if (is.null(interval_max))
-  {
-    interval_max <- 
-      switch(
-        names(plan_args)[which_null],
-        "alpha_calc" = 1,
-        1e8
-      )
-  }
-  
+  #******************************************************
   #* Estimate the missing parameter
-  if (is.null(cl))
-  {
-    .params[[names(plan_args)[which_null]]] <-
-        do.call("mapply",
-                args = c(.params[names(plan_args)[!which_null]],
-                         list(FUN = try_uniroot,
-                              MoreArgs = list(f = plan_fn,
-                                              interval = c(interval_min, interval_max)),
-                              SIMPLIFY = FALSE))) %>%
-      vapply(FUN = function(x) x[["root"]],
-             FUN.VALUE = numeric(1))
-  }
-  else
-  {
-    .params[[names(plan_args)[which_null]]] <- 
-      do.call(parallel::clusterMap,
-              args = c(.params[names(plan_args)[!which_null]],
-                       list(cl = cl,
-                            fun = try_uniroot,
-                            MoreArgs = list(f = plan_fn,
-                                            interval = c(interval_min, interval_max)),
-                            SIMPLIFY = FALSE))) %>%
-      vapply(FUN = function(x) x[["root"]],
-             FUN.VALUE = numeric(1))
-  }
+  #* By using `do.call`, I can pass the list of non-null study parameters
+  #* as a single object.  If I were to use `mapply` directly, I would
+  #* have to write a single line for each parameter. 
+  #******************************************************
   
+  .params[[names(plan_args)[which_null]]] <-
+    do.call("mapply",
+            args = c(.params[names(plan_args)[!which_null]],
+                     list(FUN = try_uniroot,
+                          MoreArgs = list(f = plan_fn,
+                                          interval = c(interval_min, interval_max)),
+                          SIMPLIFY = FALSE))) %>%
+    vapply(FUN = function(x) x[["root"]],
+           FUN.VALUE = numeric(1))
+  
+  #******************************************************
+  #* Final preparations for the results
+  #* 1. Calculate the total alpha.
+  #* 2. Calculate integerish n
+  #* 3. Return results
+  #******************************************************
+  
+  #* 1. Calculate the total alpha
   #* uniroot calculates alpha/2 for two_tail tests.  
   #* If alpha was the missing parameter, it needs to be transformed
   #* to the complete value of alpha
@@ -296,6 +311,7 @@ interval_t1 <- function(E=NULL, n=NULL, s=NULL, alpha=.05,
     .params[["alpha"]] <- .params[["alpha_calc"]] * (.params[["two_tail"]] + 1)
   }
   
+  #* 2. Calculate integerish n
   #* If n was the missing parameter, it is the floor of n_est
   #* otherwise it is the same as n_est
   if (is.null(n))
@@ -307,6 +323,7 @@ interval_t1 <- function(E=NULL, n=NULL, s=NULL, alpha=.05,
     .params[["n"]] <- .params[["n_est"]]
   }
   
+  #* 3. Return the results
   .params[c("n_est", "n", "E", "s", "alpha", "two_tail")]
 }  
 

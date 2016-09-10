@@ -20,8 +20,7 @@ Suggests:
     testthat
 Imports:
     checkmate,
-    magrittr,
-    parallel
+    magrittr
 License: GPL-2
 LazyLoad: yes
 VignetteBuilder: knitr

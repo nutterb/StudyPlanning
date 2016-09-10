@@ -7,18 +7,22 @@
 
 }
 \usage{
-interval_t1(E = NULL, n = NULL, s = NULL, alpha = 0.05,
-  two_tail = TRUE, interval_min = NULL, interval_max = NULL, cl = NULL,
-  ncores = NULL)
+interval_t1(E = NULL, s = NULL, n = NULL, alpha = 0.05,
+  two_tail = TRUE, interval_min = NULL, interval_max = NULL)
 }
 \arguments{
 \item{E}{Margin of error (\code{E} > 0)}
 
-\item{n}{Sample size (\code{n > 1})}
-
 \item{s}{Sample standard deviation (\code{s > 0})}
 
-\item{alpha}{Significance level (or 1-confidence; \code{0 < alpha < 1})}
+\item{n}{Sample size (\code{n > 1})}
+
+\item{alpha}{Significance level (or 1-confidence; \code{0 < alpha < 1}). For 
+convenience, it is permitted to pass values such as \code{seq(0, 1, by = 0.1)}.
+Strictly speaking, \code{0} and \code{1} are not on the interval (0, 1), but 
+they are removed with a message prior to the argument validation. (Note: this 
+could potentially result in an error on the assertion that \code{alpha} have
+at length >= 1, if, for example, \code{alpha = c(0, 1)})}
 
 \item{two_tail}{Logical values indicating if the interval is one or two tailed.}
 
@@ -29,13 +33,6 @@ NULL study parameter.  See Default Interval Limits.}
 \item{interval_max}{The maximum value for the search interval in 
 \code{uniroot}.  If \code{NULL}, a default value will be chosen based on the
 NULL study parameter.  See Default Interval Limits.}
-
-\item{cl}{A parallel computing cluster object that inherits class \code{cluster}.
-When \code{NULL}, estimation is done using \code{mapply}, otherwise 
-\code{clusterMap} is used.}
-
-\item{ncores}{An integerish value designating the number of cores to use in a 
-parallel cluster.  Ignored if \code{cl} is not \code{NULL}.}
 }
 \value{
 A data frame with six columns
@@ -59,7 +56,8 @@ Estimate a missing study parameter for a one sample t-based
     
     The t-based confidence interval is commonly used in estimating
     population mean using sample data.  It is based on Student's t 
-    distribution, an adaptation of the standard normal distribution.
+    distribution, an adaptation of the standard normal distribution for
+    cases when the population standard deviation is not known.
 }
 \details{
 Exactly one of the parameters \code{n}, \code{E}, \code{s} and 
@@ -71,41 +69,78 @@ if you want it computed.
 The formula used in parameter calculation is:
 
 \deqn{E = t(alpha, n-1) * s / \sqrt{n}}
-
-Support is provided for parallel computation, but its use is not recommended. 
-My benchmarking of the serial vs parallel computation shows that serial 
-computation is about 8.75 times faster than parallel computation of four 
-processors.
 }
 \section{Default Interval Limits}{
 
+
 \tabular{ccc}{
   Study Parameter \tab Lower Limit \tab Upper Limit \cr
-  \code{E}        \tab 0           \tab 1e8         \cr
-  \code{n}        \tab 2           \tab 1e8         \cr
-  \code{s}        \tab 0           \tab 1e8         \cr 
-  \code{alpha}    \tab 0           \tab 1
+  \code{E}        \tab \code{0}    \tab \code{1e8}  \cr
+  \code{n}        \tab \code{2}    \tab \code{1e8}  \cr
+  \code{s}        \tab \code{0}    \tab \code{1e8}  \cr 
+  \code{alpha}    \tab \code{0}    \tab \code{1}
 }
+
+The need for using limits other than the default ought to be rare.  The only
+purpose for doing so would be to reduce the computational time required
+to find a solution via \code{uniroot}. But \code{uniroot} is already quite 
+efficient. Be warned that no validations are performed on the user supplied 
+interval limits to confirm that the limits are within the domains of each 
+study parameter.
 }
 
 \section{Functional Requirements}{
 
 \enumerate{
   \item{Accepts values of \code{E} greater than 0}
-  \item{Remove non-positive values from \code{E} with a warning}
-  \item{Cast an error if \code{E} has no positive values.}
-  \item{Accepts integerish values of \code{n} greater than 1}
-  \item{Remove values less than 2 from \code{n} with a warning}
-  \item{Cast an error if \code{n} has no suitable values.}
+  \item{Accepts integerish values of \code{n} greater than or equal to 2}
   \item{Accepts values of \code{s} greater than 0}
-  \item{Remove non-positive values from \code{s} with a warning}
-  \item{Cast an error if \code{s} has no positive values.}
   \item{Accepts values of \code{alpha} between 0 and 1}
-  \item{Remove values less than 0 or greater than 1 from 
-             \code{alpha} with a warning}
-  \item{Cast an error if \code{alpha} has no suitable values.}
   \item{Permit one and two tail interval calculations}
+  \item{The missing study parameter is calculated correctly.}
 }
+}
+\examples{
+
+# Use Student's sleep data, group 1
+data(sleep)
+
+student_E <- 
+  (sleep$extra[sleep$group == 1] \%>\%
+  t.test \%$\%
+  conf.int \%>\%
+  diff) / 2
+student_s <- sd(sleep$extra[sleep$group == 1])
+
+# Calculate the margin of error 
+
+interval_t1(E = NULL,
+            s = student_s,
+            n = 10,
+            alpha = 0.05,
+            two_tail = TRUE)
+            
+# Calculate sample size for two different significance levels
+interval_t1(E = student_E,
+            s = student_s,
+            alpha = c(0.05, 0.10),
+            two_tail = TRUE)
+            
+# Calculate sample size over a range of margins of error
+# and with two significance levels
+(SampleSize <- 
+  interval_t1(E = seq(1.0, 2.0, by = 0.01),
+              s = student_s,
+              alpha = c(0.05, 0.10),
+              two_tail = TRUE))
+            
+library(ggplot2)
+ggplot(data = SampleSize,
+       mapping = aes(x = E,
+                     y = n_est,
+                     colour = factor(alpha))) + 
+  geom_line()
+
 }
 \author{
 Benjamin Nutter

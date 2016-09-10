@@ -256,12 +256,12 @@ interval_t1 <- function(E=NULL, n=NULL, s=NULL, alpha=.05,
   if (is.null(cl))
   {
     .params[[names(plan_args)[which_null]]] <-
-      do.call("mapply",
-              args = c(.params[names(plan_args)[!which_null]],
-                       list(FUN = uniroot,
-                            MoreArgs = list(f = plan_fn,
-                                            interval = c(interval_min, interval_max)),
-                            SIMPLIFY = FALSE))) %>%
+        do.call("mapply",
+                args = c(.params[names(plan_args)[!which_null]],
+                         list(FUN = try_uniroot,
+                              MoreArgs = list(plan_fn = plan_fn,
+                                              interval = c(interval_min, interval_max)),
+                              SIMPLIFY = FALSE))) %>%
       vapply(FUN = function(x) x[["root"]],
              FUN.VALUE = numeric(1))
   }

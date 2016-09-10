@@ -22,7 +22,7 @@
 #' }
 #' 
 
-try_uniroot <- function(..., f, interval)
+try_uniroot <- function(f, interval, ...)
 {
   tryCatch(
     uniroot(f = f,

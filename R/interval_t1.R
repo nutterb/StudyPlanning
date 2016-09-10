@@ -34,7 +34,14 @@
 #' non-\code{NULL} default, so \code{NULL} must be explicitly passed 
 #' if you want it computed.
 #' 
+#' The formula used in parameter calculation is:
+#' 
 #' \deqn{E = t(alpha, n-1) * s / \sqrt{n}}
+#' 
+#' Support is provided for parallel computation, but its use is not recommended. 
+#' My benchmarking of the serial vs parallel computation shows that serial 
+#' computation is about 8.75 times faster than parallel computation on four 
+#' processors.
 #' 
 #' @section Default Interval Limits:
 #' \tabular{ccc}{
@@ -206,6 +213,8 @@ interval_t1 <- function(E=NULL, n=NULL, s=NULL, alpha=.05,
     if (!is.null(ncores))
     {
       cl <- parallel::makeCluster(ncores)
+      parallel::clusterEvalQ(cl = cl, library(StudyPlanning))
+      on.exit(parallel::stopCluster(cl))
     }
   }
   
@@ -259,7 +268,7 @@ interval_t1 <- function(E=NULL, n=NULL, s=NULL, alpha=.05,
         do.call("mapply",
                 args = c(.params[names(plan_args)[!which_null]],
                          list(FUN = try_uniroot,
-                              MoreArgs = list(plan_fn = plan_fn,
+                              MoreArgs = list(f = plan_fn,
                                               interval = c(interval_min, interval_max)),
                               SIMPLIFY = FALSE))) %>%
       vapply(FUN = function(x) x[["root"]],
@@ -271,14 +280,12 @@ interval_t1 <- function(E=NULL, n=NULL, s=NULL, alpha=.05,
       do.call(parallel::clusterMap,
               args = c(.params[names(plan_args)[!which_null]],
                        list(cl = cl,
-                            fun = uniroot,
+                            fun = try_uniroot,
                             MoreArgs = list(f = plan_fn,
                                             interval = c(interval_min, interval_max)),
                             SIMPLIFY = FALSE))) %>%
       vapply(FUN = function(x) x[["root"]],
              FUN.VALUE = numeric(1))
-    
-    parallel::stopCluster(cl)
   }
   
   #* uniroot calculates alpha/2 for two_tail tests.  

@@ -68,7 +68,14 @@ calculated from the others.  Notice that \code{alpha} has a
 non-\code{NULL} default, so \code{NULL} must be explicitly passed 
 if you want it computed.
 
+The formula used in parameter calculation is:
+
 \deqn{E = t(alpha, n-1) * s / \sqrt{n}}
+
+Support is provided for parallel computation, but its use is not recommended. 
+My benchmarking of the serial vs parallel computation shows that serial 
+computation is about 8.75 times faster than parallel computation of four 
+processors.
 }
 \section{Default Interval Limits}{
 

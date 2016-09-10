@@ -4,15 +4,15 @@
 \alias{try_uniroot}
 \title{Wrapper Function for \code{uniroot} Within \code{tryCatch]}}
 \usage{
-try_uniroot(..., f, interval)
+try_uniroot(f, interval, ...)
 }
 \arguments{
-\item{...}{Additional named or unnamed arguments to be passed to \code{f}}
-
 \item{f}{The function for which the root is sought.}
 
 \item{interval}{A vector containing the end-points of the interval to be 
 searched for the root.}
+
+\item{...}{Additional named or unnamed arguments to be passed to \code{f}}
 }
 \description{
 When \code{uniroot} cannot find a solution within the given interval,

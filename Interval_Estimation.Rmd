@@ -1,0 +1,35 @@
+# Interval Estimation
+
+## One Sample T-Interval
+
+### Estimation Formula
+
+$$ E = t_{1-\alpha^*, n-1} \cdot \frac{s}{\sqrt{n}} $$
+
+* $E$ = the margin of error
+* $\alpha^*$ = the one or two sided significance level (1 - Confidence)
+* $s$ = the standard deviation
+* $n$ = the sample size
+
+### Guidelines on Parallel Processing
+
+```{r}
+data(sleep)
+
+#* Margin of Error
+(sleep$extra[sleep$group == 1] %>%
+  t.test %$%
+  conf.int %>%
+  diff) / 2
+
+#* Standard Deviation
+sd(sleep$extra[sleep$group == 1])
+
+SampleSize <- 
+  interval_t1(E = 1.27978, #seq(1, 5, by = 0.01),
+              n = 10,
+              s = 1.78901, #c(1, 1.5, 1.75, 2.0, 2.5, 3.0),
+              alpha = NULL, #alpha = 0.95, #c(0.80, 0.85, 0.90, 0.95),
+              two_tail = c(FALSE, TRUE))
+
+```

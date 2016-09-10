@@ -1,0 +1,40 @@
+--- 
+title: "StudyPlanning"
+author: "Benjamin Nutter"
+date: "`r Sys.Date()`"
+site: bookdown::bookdown_site
+bookdown::gitbook:
+  config:
+    toc:
+      collapse: section
+      scroll_highlight: true
+      before: null
+      after: null
+bookdown::pdf_book:
+  keep_tex: yes
+documentclass: book
+bibliography: 
+biblio-style: apalike
+link-citations: yes
+github-repo: nutterb/StudyPlanning
+description: "Efficient and Tidy Study Parameter Estimation"
+output: 
+  pdf_document: 
+    keep_tex: yes
+---
+
+```{r, warning = FALSE, message = FALSE, echo = FALSE}
+library(dplyr)
+library(ggplot2)
+library(magrittr)
+library(pixiedust)
+library(RColorBrewer)
+library(StudyPlanning)
+library(tidyr)
+
+palette <- brewer.pal(9, "PRGn")
+```
+
+# Introduction 
+
+I need to put some kind of introduction here.

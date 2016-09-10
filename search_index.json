@@ -1,0 +1,4 @@
+[
+["index.html", "StudyPlanning 1 Introduction", " StudyPlanning Benjamin Nutter 2016-09-09 1 Introduction I need to put some kind of introduction here. "],
+["interval-estimation.html", "2 Interval Estimation 2.1 One Sample T-Interval", " 2 Interval Estimation 2.1 One Sample T-Interval 2.1.1 Estimation Formula \\[ E = t_{1-\\alpha^*, n-1} \\cdot \\frac{s}{\\sqrt{n}} \\] \\(E\\) = the margin of error \\(\\alpha^*\\) = the one or two sided significance level (1 - Confidence) \\(s\\) = the standard deviation \\(n\\) = the sample size 2.1.2 Guidelines on Parallel Processing "]
+]

@@ -13,7 +13,8 @@
 3. **Params:** Include the parameter domain of each study parameter in the param definitioni.
 4. **Details:** 
     + Formula for the estimation
-    + Guidelines for when to use parallel processing
+    + Behavior for out-of-domain values
+    + Guidelines for when to use parallel processing (if any)
 5. **Default Interval Limits**: A table with three columns giving the default limits for the function.
     + Study parameter
     + Lower interval limit
@@ -21,5 +22,6 @@
 6. **Functional Requirements:** Objective, measurable requirements against which unit tests may be written.
 7. **Return:** Description of the data frame returned.
 8. **sources**
-9. **Authorship**
-10. **Examples**
+9. **See Also**
+10. **Authorship**
+11. **Examples**

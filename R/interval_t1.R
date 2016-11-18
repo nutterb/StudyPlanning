@@ -312,11 +312,11 @@ interval_t1 <- function(E=NULL, s=NULL, n=NULL, alpha=.05,
   }
   
   #* 2. Calculate integerish n
-  #* If n was the missing parameter, it is the floor of n_est
+  #* If n was the missing parameter, it is the ceiling of n_est
   #* otherwise it is the same as n_est
   if (is.null(n))
   {
-    .params[["n"]] <- floor(.params[["n_est"]])
+    .params[["n"]] <- ceiling(.params[["n_est"]])
   }
   else
   {

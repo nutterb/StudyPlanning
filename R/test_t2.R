@@ -107,7 +107,7 @@
 #' arguments. In other words, vectors of unequal length do not use recycling, 
 #' but use permutation.
 #' 
-#' @section Functional Arguments:
+#' @section Functional Requirements:
 #' \enumerate{
 #'   \item Exactly one of \code{delta}, \code{n}, \code{s}, \code{alpha}, or
 #'     \code{power} must be \code{NULL}.

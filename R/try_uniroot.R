@@ -22,22 +22,44 @@
 #' }
 #' 
 
-try_uniroot <- function(f, interval, ...)
+try_uniroot <- function(f, interval, integer = FALSE, ...)
 {
-  tryCatch(
-    uniroot(f = f,
-            interval = interval,
-            ...),
-    error = function(cond)
-    {
-      if (grepl("f[(][)] values at end points not of opposite sign", cond))
+  if (integer)
+  {
+    tryCatch(
+      uniroot.integer(f = f,
+              interval = interval,
+              ...),
+      error = function(cond)
       {
-        list(root = NA)
+        if (grepl("reached maxiter without a solution", cond))
+        {
+          list(root = NA)
+        }
+        else
+        {
+          stop(cond)
+        }
       }
-      else
+    )
+  }
+  else
+  {
+    tryCatch(
+      uniroot(f = f,
+              interval = interval,
+              ...),
+      error = function(cond)
       {
-        stop(cond)
+        if (grepl("f[(][)] values at end points not of opposite sign", cond))
+        {
+          list(root = NA)
+        }
+        else
+        {
+          stop(cond)
+        }
       }
-    }
-  )
+    )
+  }
 }

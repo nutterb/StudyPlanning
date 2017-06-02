@@ -44,7 +44,7 @@
 #'
 #' @author Benjamin Nutter
 #'
-#' @references
+#' @source 
 #' O'Brien R, Castelloe J, "Sample-Size Analysis in Study Planning,"
 #'   American Statistical Association Continuing Education Program: Section on
 #'   Teaching Statistics in the Health Sciences, Joint Statistical Meetings,
@@ -52,6 +52,8 @@
 #'
 #' Some design choices were obtained from the r-help question at:
 #' \url{http://r.789695.n4.nabble.com/Sample-size-calculations-for-one-sided-binomial-exact-test-td3964313.html}
+#'
+#' Formal theoretical considerations are described at \url{http://nutterb.github.io/ItCanBeShown/binomial-test.html}
 #'
 #' @section Functional Requirements:
 #' \enumerate{
@@ -100,7 +102,8 @@ test_binomial <- function(n = NULL, p0 = NULL, p1 = NULL,
                           tail = "both",
                           conservative = FALSE,
                           interval_min = NULL,
-                          interval_max = NULL){
+                          interval_max = NULL,
+                          ...){
   
   coll <- checkmate::makeAssertCollection()
   
@@ -204,7 +207,8 @@ test_binomial <- function(n = NULL, p0 = NULL, p1 = NULL,
                     p0 = p0,
                     p1 = p1,
                     power = power,
-                    alpha = alpha)
+                    alpha = alpha,
+                    tail = character(0))
   
   which_null <-
     vapply(plan_args,
@@ -284,8 +288,7 @@ test_binomial <- function(n = NULL, p0 = NULL, p1 = NULL,
   # Set the NULL argument to the first argument in plan_fn
   # This sets it to be the argument for which uniroot will solve
   formals(plan_fn) <- c(plan_args[which_null],
-                        plan_args[!which_null],
-                        list(tail = tail))
+                        plan_args[!which_null])
   
   # Output Data Frame
   .params <- expand.grid(p0 = if (is.null(p0)) NA else p0,
@@ -297,22 +300,47 @@ test_binomial <- function(n = NULL, p0 = NULL, p1 = NULL,
                          n = if (is.null(n)) NA else n,
                          tail = tail,
                          conservative = conservative,
-                         stringsAsFactors=FALSE)
-  
-  
-  
+                         stringsAsFactors = FALSE)
+
   # Calculate the NULL parameter
   .params[[names(plan_args)[which_null]]] <-
     vapply(
       do.call("mapply",
               args = c(.params[names(plan_args)[!which_null]],
                        list(FUN = try_uniroot,
-                            MoreArgs = list(f = plan_fn,
-                                            interval = c(interval_min, interval_max)),
+                            MoreArgs = c(list(f = plan_fn,
+                                              interval = c(interval_min, interval_max),
+                                              integer = is.null(n)),
+                                         list(...)),
                             SIMPLIFY = FALSE))),
       FUN = function(x) x[["root"]],
       FUN.VALUE = numeric(1)
     )
+  
+  .params[["n"]][.params[["conservative"]]] <- 
+    .params[["n"]][.params[["conservative"]]] + 1
+  
+  .params[["alpha_actual"]] <- 
+    (mapply(
+       FUN = plan_fn,
+       n = .params[["n"]],
+       p0 = .params[["p0"]],
+       p1 = .params[["p0"]],
+       alpha = .params[["alpha"]],
+       power = .params[["power"]],
+       tail = .params[["tail"]]
+    ) - power) * -1
+
+  .params[["power_actual"]] <- 
+    (mapply(
+      FUN = plan_fn,
+      n = .params[["n"]],
+      p0 = .params[["p0"]],
+      p1 = .params[["p1"]],
+      alpha = .params[["alpha"]],
+      power = .params[["power"]],
+      tail = .params[["tail"]]
+    ) - power) * -1
   
   .params
 }

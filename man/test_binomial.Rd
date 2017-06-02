@@ -6,7 +6,7 @@
 \usage{
 test_binomial(n = NULL, p0 = NULL, p1 = NULL, power = NULL,
   alpha = 0.05, tail = "both", conservative = FALSE,
-  interval_min = NULL, interval_max = NULL)
+  interval_min = NULL, interval_max = NULL, ...)
 }
 \arguments{
 \item{n}{The sample size, or number of trials}

@@ -92,12 +92,23 @@ study parameter.
 \section{Functional Requirements}{
 
 \enumerate{
-  \item{Accepts values of \code{E} greater than 0}
-  \item{Accepts integerish values of \code{n} greater than or equal to 2}
-  \item{Accepts values of \code{s} greater than 0}
-  \item{Accepts values of \code{alpha} between 0 and 1}
-  \item{Permit one and two tail interval calculations}
-  \item{The missing study parameter is calculated correctly.}
+  \item{When \code{E = NULL}, correctly calculate the margin of error that
+    satisfies the other arguments.}
+  \item{When \code{n = NULL}, correctly calculate the sample size that
+    satisifies the other arguments.}
+  \item{When \code{s = NULL}, correctly calculate the standard deviation 
+    that satisfies the other arguments.}
+  \item{When \code{alpha = NULL}, correctly calculate the significance 
+    level that satisfies the other arguments.}
+  \item Cast an error if the number of \code{NULL} arguments among \code{n},
+    \code{E}, \code{s}, and \code{alpha} is not 1.
+  \item{Cast an error when \code{E} is not numeric on the interval (0, Inf)}
+  \item{Cast an error if \code{n} is not integerish on the interval [2, Inf)}
+  \item{Cast an error if \code{s} is not numeric on the interval(0, Inf)}
+  \item{Cast an error if \code{alpha} is not numeric on the interval (0, 1)}
+  \item{Cast an error if \code{two_tail} is not logical.}
+  \item{Cast an error if \code{interval_min} is not \code{numeric(1)}}
+  \item{Cast an error if \code{interval_max} is not \code{numeric(1)}}
 }
 }
 \examples{

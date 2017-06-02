@@ -4,7 +4,7 @@
 \alias{test_t2}
 \title{Study Parameter Estimation for Two Sample T-Tests}
 \usage{
-test_t2(delta = NULL, n = NULL, s = NULL, alpha = 0.05, power = NULL,
+test_t2(delta = NULL, n = NULL, se = NULL, alpha = 0.05, power = NULL,
   delta0 = 0, weights = list(c(1, 1)), two_tail = TRUE,
   df_type = c("default", "equal_variance", "satterthwaite"), mu1_null = NA,
   mu1_alt = NA, mu2_null = NA, mu2_alt = NA, s1 = NA, n1 = NA,
@@ -16,7 +16,7 @@ the two sample means.}
 
 \item{n}{Numeric vector of the total sample size.}
 
-\item{s}{Numeric vector of the estimated joint standard deviation between
+\item{se}{Numeric vector of the estimated joint standard error between
 the two samples.  Must be greater than 0.}
 
 \item{alpha}{Numeric vector of significance levels for the test.
@@ -54,8 +54,8 @@ values for the population means of groups 1 and 2, respectively.}
 
 \item{s1, s2}{Numeric vectors of standard deviations for the first 
 and second groups. Allows for standard deviations to be specified 
-directly instead of calculating the joint standard deviation for 
-\code{s}.}
+directly instead of providing the joint standard error for 
+\code{se}.}
 
 \item{n1, n2}{Numeric vectors of sample sizes for the two groups. This 
 allows the sample sizes to be entered directly instead of using the 
@@ -96,13 +96,13 @@ as both values are non-missing.  If argument is given a value, both must be
 given a value, and these values will override the \code{n}/\code{weight} 
 pair.
 
-\strong{Standard Deviation}: \code{s} may be used by itself to indicate the
-joint (square root of either the pooled or summed variance) standard 
-deviation.  In situations where the joint value is not provided, but the
+\strong{Standard Deviation}: \code{se} may be used by itself to indicate the
+joint standard error.  
+In situations where the joint value is not provided, but the
 individual values are, \code{s1} and \code{s2} may be provided and the 
-joint value will be calculated.  If either \code{s1} or \code{s2} has 
+joint standard error will be calculated.  If either \code{s1} or \code{s2} has 
 a value, they must both have a value. The values calculated from \code{s1}
-and \code{s2} override any values passed to \code{s}.
+and \code{s2} override any values passed to \code{se}.
 
 \strong{Null Hypotheses}: \code{delta0} may be used to
 indicate the value of the difference under the null hypothesis. Alternatively,
@@ -128,7 +128,7 @@ simple matter of \code{expand.grid}
 When the alternate arguments are used, the principle is the same, but
 some intermediary work is done.  There is no requirement that \code{s1} 
 and \code{s2}, for example, have the same length.  In order to construct
-the values that will ultimately act as \code{s}, then, \code{expand.grid} 
+the values that will ultimately act as \code{se}, then, \code{expand.grid} 
 is used on \code{s1} and \code{s2}, returning all of the permutations 
 of the two vectors, which will then permute with all of the primary 
 arguments. In other words, vectors of unequal length do not use recycling, 
@@ -140,10 +140,16 @@ but use permutation.
 \enumerate{
   \item Exactly one of \code{delta}, \code{n}, \code{s}, \code{alpha}, or
     \code{power} must be \code{NULL}.
+  \item If either of \code{mu1_null} or \code{mu2_null} is non missing, 
+    the must both be non missing.
+  \item Values for \code{delta0} may be calculated from \code{mu1_null} 
+    and \code{mu2_null}.
+  \item If either of \code{mu1_alt} or \code{mu2_alt} is non missing, 
+    the must both be non missing.
   \item Values for \code{delta} may be calculated from \code{mu1_alt} 
     and \code{mu2_alt}.
   \item Values for \code{n} may be calculated from \code{n1} and \code{n2}
-  \item Values for \code{s} may be calculated from \code{s1} and \code{s2}
+  \item Values for \code{se} may be calculated from \code{s1} and \code{s2}
   \item Values for \code{delta0} may be calculated from \code{mu1_null}
     and \code{mu2_null}
   \item \code{alpha} strips 0 and 1 from its inputs quietly.

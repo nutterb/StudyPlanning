@@ -11,7 +11,7 @@
 #' @param delta Numeric vector of proposed observed differences between 
 #'   the two sample means.
 #' @param n  Numeric vector of the total sample size.
-#' @param s3 Numeric vector of the estimated joint standard error between
+#' @param se Numeric vector of the estimated joint standard error between
 #'   the two samples.  Must be greater than 0.
 #' @param alpha Numeric vector of significance levels for the test.
 #'   Must be on the interval \code{(0, 1)}.
@@ -43,8 +43,8 @@
 #'   \code{weights} approach.
 #' @param s1,s2 Numeric vectors of standard deviations for the first 
 #'   and second groups. Allows for standard deviations to be specified 
-#'   directly instead of calculating the joint standard deviation for 
-#'   \code{s}.
+#'   directly instead of providing the joint standard error for 
+#'   \code{se}.
 #' @param var_equal Logical vector that directs the calculation of degrees
 #'   of freedom when \code{df_type = "default"}.  When \code{var_equal = TRUE}, 
 #'   the default behavior of \code{df_type = "default"} is \code{n1 + n2 - 2}.
@@ -71,13 +71,13 @@
 #' given a value, and these values will override the \code{n}/\code{weight} 
 #' pair.
 #' 
-#' \strong{Standard Deviation}: \code{s} may be used by itself to indicate the
-#' joint (square root of either the pooled or summed variance) standard 
-#' deviation.  In situations where the joint value is not provided, but the
+#' \strong{Standard Deviation}: \code{se} may be used by itself to indicate the
+#' joint standard error.  
+#' In situations where the joint value is not provided, but the
 #' individual values are, \code{s1} and \code{s2} may be provided and the 
-#' joint value will be calculated.  If either \code{s1} or \code{s2} has 
+#' joint standard error will be calculated.  If either \code{s1} or \code{s2} has 
 #' a value, they must both have a value. The values calculated from \code{s1}
-#' and \code{s2} override any values passed to \code{s}.
+#' and \code{s2} override any values passed to \code{se}.
 #' 
 #' \strong{Null Hypotheses}: \code{delta0} may be used to
 #' indicate the value of the difference under the null hypothesis. Alternatively,
@@ -101,7 +101,7 @@
 #' When the alternate arguments are used, the principle is the same, but
 #' some intermediary work is done.  There is no requirement that \code{s1} 
 #' and \code{s2}, for example, have the same length.  In order to construct
-#' the values that will ultimately act as \code{s}, then, \code{expand.grid} 
+#' the values that will ultimately act as \code{se}, then, \code{expand.grid} 
 #' is used on \code{s1} and \code{s2}, returning all of the permutations 
 #' of the two vectors, which will then permute with all of the primary 
 #' arguments. In other words, vectors of unequal length do not use recycling, 
@@ -120,7 +120,7 @@
 #'   \item Values for \code{delta} may be calculated from \code{mu1_alt} 
 #'     and \code{mu2_alt}.
 #'   \item Values for \code{n} may be calculated from \code{n1} and \code{n2}
-#'   \item Values for \code{s} may be calculated from \code{s1} and \code{s2}
+#'   \item Values for \code{se} may be calculated from \code{s1} and \code{s2}
 #'   \item Values for \code{delta0} may be calculated from \code{mu1_null}
 #'     and \code{mu2_null}
 #'   \item \code{alpha} strips 0 and 1 from its inputs quietly.
@@ -133,7 +133,7 @@
 #' 
 #' @export
 
-test_t2 <- function(delta = NULL, n=NULL, s=NULL, alpha=.05,
+test_t2 <- function(delta = NULL, n=NULL, se=NULL, alpha=.05,
                     power=NULL, delta0=0, weights=list(c(1, 1)),
                     two_tail=TRUE, 
                     df_type=c("default", "equal_variance", "satterthwaite"),
@@ -197,9 +197,9 @@ test_t2 <- function(delta = NULL, n=NULL, s=NULL, alpha=.05,
                               add = coll)
   }
   
-  if (!is.null(s))
+  if (!is.null(se))
   {
-    checkmate::assert_numeric(x = s,
+    checkmate::assert_numeric(x = se,
                               any.missing = FALSE,
                               add = coll)
   }
@@ -376,7 +376,7 @@ test_t2 <- function(delta = NULL, n=NULL, s=NULL, alpha=.05,
     .result <- 
       expand.grid.df(
         .result,
-        expand.grid(s = if (is.null(s)) NA else s)
+        expand.grid(se = if (is.null(se)) NA else se)
       )
   }
   
@@ -418,14 +418,19 @@ test_t2 <- function(delta = NULL, n=NULL, s=NULL, alpha=.05,
                   stringsAsFactors = FALSE)
     )
   
-  if (!"se" %in% names(.result))
+  
+  power_fn <- function()
   {
-    .result <- 
-      .result %>%
-      dplyr::mutate(se = t2_se_calc(s1, s2, n, w))
+    power - qt(1 - alpha / 2, 
+               df = t2_df_calc(se = se,
+                               s1 = s1, 
+                               s2 = s2, 
+                               n = n, 
+                               w = w, 
+                               df_type = df_type, 
+                               var_equal = var_equal),
+               ncp = (delta0 - delta) / se)
   }
-  
-  
   
   
   .result
@@ -433,12 +438,14 @@ test_t2 <- function(delta = NULL, n=NULL, s=NULL, alpha=.05,
 }
 
 
-t2_se_calc <- function(s1, s2 = NULL, n, w, var_equal = FALSE)
+t2_se_calc <- function(se, s1, s2, n, w, var_equal = FALSE)
 {
+  #* When se was given as an argument, its value is assumed to be 
+  #* exact.  There is no need to calculate it. 
+  if (!is.na(se)) return(se)
+  
   n1 <- n * w
   n2 <- n * (1 - w)
-  
-  if (is.null(s2)) s2 <- s1
   
   if (var_equal)
   {
@@ -451,7 +458,7 @@ t2_se_calc <- function(s1, s2 = NULL, n, w, var_equal = FALSE)
   }
 }
 
-t2_df_calc <- function(s1, s2 = NULL, n, w, df_type, var_equal)
+t2_df_calc <- function(se, s1, s2, n, w, df_type, var_equal)
 {
   if (df_type == "default")
   {
@@ -462,7 +469,7 @@ t2_df_calc <- function(s1, s2 = NULL, n, w, df_type, var_equal)
   n2 <- n * (1 - w)
   if (is.null(s2)) s2 <- s1
   
-  if (df_type == "equal_variance")
+  if (df_type == "equal_variance" | !is.na(se))
   {
     n1 + n2 - 2
   }
@@ -473,6 +480,6 @@ t2_df_calc <- function(s1, s2 = NULL, n, w, df_type, var_equal)
   }
 }
 
-test_t2(n = 20, delta = 1, s = 1, s1 = 3, s2 = 4)
+test_t2(n = 20, delta = 1, se = 1, s1 = 3, s2 = 4)
 test_t2(n = 20, mu1_alt = 1:3, mu2_alt = 3:2, 
-        mu1_null = 2, mu2_null = 3, s = 1)
+        mu1_null = 2, mu2_null = 3, se = 1)

@@ -320,27 +320,29 @@ test_binomial <- function(n = NULL, p0 = NULL, p1 = NULL,
   .params[["n"]][.params[["conservative"]]] <- 
     .params[["n"]][.params[["conservative"]]] + 1
   
-  .params[["alpha_actual"]] <- 
-    (mapply(
-       FUN = plan_fn,
-       n = .params[["n"]],
-       p0 = .params[["p0"]],
-       p1 = .params[["p0"]],
-       alpha = .params[["alpha"]],
-       power = .params[["power"]],
-       tail = .params[["tail"]]
-    ) - power) * -1
-
-  .params[["power_actual"]] <- 
-    (mapply(
-      FUN = plan_fn,
-      n = .params[["n"]],
-      p0 = .params[["p0"]],
-      p1 = .params[["p1"]],
-      alpha = .params[["alpha"]],
-      power = .params[["power"]],
-      tail = .params[["tail"]]
-    ) - power) * -1
-  
+  if (!is.null(power))
+  {
+    .params[["alpha_actual"]] <- 
+      (mapply(
+        FUN = plan_fn,
+        n = .params[["n"]],
+        p0 = .params[["p0"]],
+        p1 = .params[["p0"]],
+        alpha = .params[["alpha"]],
+        power = .params[["power"]],
+        tail = .params[["tail"]]
+      ) - power) * -1
+    
+    .params[["power_actual"]] <- 
+      (mapply(
+        FUN = plan_fn,
+        n = .params[["n"]],
+        p0 = .params[["p0"]],
+        p1 = .params[["p1"]],
+        alpha = .params[["alpha"]],
+        power = .params[["power"]],
+        tail = .params[["tail"]]
+      ) - power) * -1
+  }
   .params
 }

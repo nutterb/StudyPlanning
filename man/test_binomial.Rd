@@ -3,6 +3,17 @@
 \name{test_binomial}
 \alias{test_binomial}
 \title{Power and Sample Size Analysis for a Binomial Test}
+\source{
+O'Brien R, Castelloe J, "Sample-Size Analysis in Study Planning,"
+  American Statistical Association Continuing Education Program: Section on
+  Teaching Statistics in the Health Sciences, Joint Statistical Meetings,
+  San Francisco, CA; 5 August 2003 (Short Course Manual)
+
+Some design choices were obtained from the r-help question at:
+\url{http://r.789695.n4.nabble.com/Sample-size-calculations-for-one-sided-binomial-exact-test-td3964313.html}
+
+Formal theoretical considerations are described at \url{http://nutterb.github.io/ItCanBeShown/binomial-test.html}
+}
 \usage{
 test_binomial(n = NULL, p0 = NULL, p1 = NULL, power = NULL,
   alpha = 0.05, tail = "both", conservative = FALSE,
@@ -105,14 +116,5 @@ ggplot(Chill, aes(x=n, y=power, colour=factor(alpha))) + geom_line()
 }
 \author{
 Benjamin Nutter
-}
-\references{
-O'Brien R, Castelloe J, "Sample-Size Analysis in Study Planning,"
-  American Statistical Association Continuing Education Program: Section on
-  Teaching Statistics in the Health Sciences, Joint Statistical Meetings,
-  San Francisco, CA; 5 August 2003 (Short Course Manual)
-
-Some design choices were obtained from the r-help question at:
-\url{http://r.789695.n4.nabble.com/Sample-size-calculations-for-one-sided-binomial-exact-test-td3964313.html}
 }
 

@@ -4,7 +4,7 @@
 \alias{try_uniroot}
 \title{Wrapper Function for \code{uniroot} Within \code{tryCatch]}}
 \usage{
-try_uniroot(f, interval, ...)
+try_uniroot(f, interval, integer = FALSE, ...)
 }
 \arguments{
 \item{f}{The function for which the root is sought.}

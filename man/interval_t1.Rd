@@ -7,8 +7,8 @@
 
 }
 \usage{
-interval_t1(E = NULL, s = NULL, n = NULL, alpha = 0.05,
-  two_tail = TRUE, interval_min = NULL, interval_max = NULL)
+interval_t1(E = NULL, s = NULL, n = NULL, alpha = 0.05, tail = "both",
+  interval_min = NULL, interval_max = NULL)
 }
 \arguments{
 \item{E}{Margin of error (\code{E} > 0)}
@@ -24,7 +24,8 @@ they are removed with a message prior to the argument validation. (Note: this
 could potentially result in an error on the assertion that \code{alpha} have
 at length >= 1, if, for example, \code{alpha = c(0, 1)})}
 
-\item{two_tail}{Logical values indicating if the interval is one or two tailed.}
+\item{tail}{\code{character} value, a subset of \code{c("both", "left", 
+"right")}.}
 
 \item{interval_min}{The minimum value for the search interval in 
 \code{uniroot}.  If \code{NULL}, a default value will be chosen based on the 
@@ -44,7 +45,8 @@ A data frame with six columns
    \item \code{E}: Margin of error
    \item \code{s}: Sample Standard Deviation
    \item \code{alpha}: Desired significance level.
-   \item \code{two_tail}: Logical value indicating if the test was two tailed.
+   \item \code{tail}: Character value indicating if the interval is 
+     two sided, left sided, or right sided.
  }
 }
 \description{
@@ -106,7 +108,8 @@ study parameter.
   \item{Cast an error if \code{n} is not integerish on the interval [2, Inf)}
   \item{Cast an error if \code{s} is not numeric on the interval(0, Inf)}
   \item{Cast an error if \code{alpha} is not numeric on the interval (0, 1)}
-  \item{Cast an error if \code{two_tail} is not logical.}
+  \item{Cast an error if \code{tail} is not a subset of 
+    \code{c("both", "left", "right")}.}
   \item{Cast an error if \code{interval_min} is not \code{numeric(1)}}
   \item{Cast an error if \code{interval_max} is not \code{numeric(1)}}
 }
@@ -129,13 +132,13 @@ interval_t1(E = NULL,
             s = student_s,
             n = 10,
             alpha = 0.05,
-            two_tail = TRUE)
+            tail = "both")
             
 # Calculate sample size for two different significance levels
 interval_t1(E = student_E,
             s = student_s,
             alpha = c(0.05, 0.10),
-            two_tail = TRUE)
+            tail = "both")
             
 # Calculate sample size over a range of margins of error
 # and with two significance levels
@@ -143,7 +146,7 @@ interval_t1(E = student_E,
   interval_t1(E = seq(1.0, 2.0, by = 0.01),
               s = student_s,
               alpha = c(0.05, 0.10),
-              two_tail = TRUE))
+              tail = "both"))
             
 library(ggplot2)
 ggplot(data = SampleSize,

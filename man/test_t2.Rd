@@ -14,7 +14,7 @@ test_t2(delta = NULL, n = NULL, se = NULL, alpha = 0.05, power = NULL,
 \item{delta}{Numeric vector of proposed observed differences between 
 the two sample means.}
 
-\item{n}{Numeric vector of the total sample size.}
+\item{n}{Integer like vector of the total sample size.}
 
 \item{se}{Numeric vector of the estimated joint standard error between
 the two samples.  Must be greater than 0.}

@@ -41,6 +41,23 @@
 #'   \code{power}    \tab 0           \tab 1           \cr
 #'   \code{alpha}    \tab 0           \tab 1
 #' }
+#' 
+#' @return Returns a data frame with the following columns.
+#' \itemize{
+#'  \item{\code{p0} } The population proportion under the null hypothesis.
+#'  \item{\code{p1} } The population proportion under the alternative
+#'    hypothesis.
+#'  \item{\code{alpha} } The nominal, or desired, significance level.
+#'  \item{\code{alpha_actual} } The actual significance level.
+#'  \item{\code{power} } The nominal, or desired, power.
+#'  \item{\code{power_actual} } The actual power.
+#'  \item{\code{n} } Sample size
+#'  \item{\code{tail} } Character string indicating if the test was left
+#'    tailed, right tailed, or two tailed.
+#'  \item{\code{conservative} } Logical value indicating if the the 
+#'    sample size reflects a more conservative estimate. See the 
+#'    \code{conservative} argument.
+#' }
 #'
 #' @author Benjamin Nutter
 #'

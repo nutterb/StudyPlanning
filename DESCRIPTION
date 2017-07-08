@@ -1,7 +1,7 @@
 Package: StudyPlanning
 Type: Package
 Title: Evaluating Sample Size, Power, and Assumptions in Study Planning
-Version: 0.1
+Version: 0.0.1
 Author: Benjamin Nutter
 Maintainer: Benjamin Nutter <nutterb@ccf.org>
 Description: Sample size and power analyses often focus on a fixed set of

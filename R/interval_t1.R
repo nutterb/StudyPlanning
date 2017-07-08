@@ -21,7 +21,8 @@
 #'   they are removed with a message prior to the argument validation. (Note: this 
 #'   could potentially result in an error on the assertion that \code{alpha} have
 #'   at length >= 1, if, for example, \code{alpha = c(0, 1)}) 
-#' @param two_tail Logical values indicating if the interval is one or two tailed.
+#' @param tail \code{character} value, a subset of \code{c("both", "left", 
+#'   "right")}.
 #' @param interval_min The minimum value for the search interval in 
 #'   \code{uniroot}.  If \code{NULL}, a default value will be chosen based on the 
 #'   NULL study parameter.  See Default Interval Limits.
@@ -72,7 +73,8 @@
 #'   \item{Cast an error if \code{n} is not integerish on the interval [2, Inf)}
 #'   \item{Cast an error if \code{s} is not numeric on the interval(0, Inf)}
 #'   \item{Cast an error if \code{alpha} is not numeric on the interval (0, 1)}
-#'   \item{Cast an error if \code{two_tail} is not logical.}
+#'   \item{Cast an error if \code{tail} is not a subset of 
+#'     \code{c("both", "left", "right")}.}
 #'   \item{Cast an error if \code{interval_min} is not \code{numeric(1)}}
 #'   \item{Cast an error if \code{interval_max} is not \code{numeric(1)}}
 #' }
@@ -86,7 +88,8 @@
 #'    \item \code{E}: Margin of error
 #'    \item \code{s}: Sample Standard Deviation
 #'    \item \code{alpha}: Desired significance level.
-#'    \item \code{two_tail}: Logical value indicating if the test was two tailed.
+#'    \item \code{tail}: Character value indicating if the interval is 
+#'      two sided, left sided, or right sided.
 #'  }
 #'  
 #' @source 
@@ -111,13 +114,13 @@
 #'             s = student_s,
 #'             n = 10,
 #'             alpha = 0.05,
-#'             two_tail = TRUE)
+#'             tail = "both")
 #'             
 #' # Calculate sample size for two different significance levels
 #' interval_t1(E = student_E,
 #'             s = student_s,
 #'             alpha = c(0.05, 0.10),
-#'             two_tail = TRUE)
+#'             tail = "both")
 #'             
 #' # Calculate sample size over a range of margins of error
 #' # and with two significance levels
@@ -125,7 +128,7 @@
 #'   interval_t1(E = seq(1.0, 2.0, by = 0.01),
 #'               s = student_s,
 #'               alpha = c(0.05, 0.10),
-#'               two_tail = TRUE))
+#'               tail = "both"))
 #'             
 #' library(ggplot2)
 #' ggplot(data = SampleSize,
@@ -137,7 +140,7 @@
 #' @export 
 
 interval_t1 <- function(E=NULL, s=NULL, n=NULL, alpha=.05,
-                        two_tail = TRUE,
+                        tail = "both",
                         interval_min = NULL,
                         interval_max = NULL)
 {
@@ -159,22 +162,16 @@ interval_t1 <- function(E=NULL, s=NULL, n=NULL, alpha=.05,
            FUN = is.null,
            FUN.VALUE = logical(1))
   
-  #*******************************************************
-  #* Argument checks
-  #* 1. only one of E, n, s, alpha may be NULL
-  #* 2. E must be on the interval (0, Inf)
-  #* 3. n must be integerish on the interval [2, Inf)
-  #* 4. s must be on the interval (0, Inf)
-  #* 5. alpha must be on the interval (0, 1)
-  #* 6.  two_tail must be logical
-  #*******************************************************
+  #********************************************************
+  # Argument Validation
+  #********************************************************
   
   coll <- checkmate::makeAssertCollection()
   
   #* 1.  only one of E, n, s, alpha may be NULL (error)
   if (sum(which_null) != 1)
   {
-    coll$add("Exactly one of `E`, `n`, `s`, and `alpha` may be NULL")
+    coll$push("Exactly one of `E`, `n`, `s`, and `alpha` may be NULL")
   }
   
   #* 2. E must be on the interval (0, Inf)
@@ -207,32 +204,21 @@ interval_t1 <- function(E=NULL, s=NULL, n=NULL, alpha=.05,
   #* 5. alpha must be on the interval (0, 1)
   if (!is.null(alpha))
   {
-    if (any(alpha %in% c(0, 1)))
-    {
-      alpha <- alpha[!alpha %in% c(0, 1)]
-      message("`alpha` only accepts values on the interval (0, 1). ",
-              "Values equal to 0 or 1 have been removed. ",
-              "(This could affect the argument validation)")
-    }
-    checkmate::assert_numeric(x = alpha,
-                              lower = 0,
-                              upper = 1,
-                              min.len = 1,
-                              add = coll)
+    remove_limit(x = alpha,
+                 coll = coll,
+                 .var.name = "alpha")
   }
   
-  #* 6 two_tail must be logical
-  checkmate::assert_logical(x = two_tail,
-                            min.len = 1,
-                            add = coll)
+  #* 6 tail must be a subset of both, left, right
+  checkmate::assert_subset(x = tail,
+                           choices = c("both", "left", "right"),
+                           add = coll)
   
   #* Print errors
   checkmate::reportAssertions(coll)
   
   #******************************************************
   #* Assign additional defaults
-  #* 1. Default interval minimum
-  #* 2. Default interval maximum
   #******************************************************
   
   #* Default interval minimum
@@ -259,8 +245,6 @@ interval_t1 <- function(E=NULL, s=NULL, n=NULL, alpha=.05,
   
   #******************************************************
   #* Study Parameter Estimating Function
-  #* 1. Estimating Function
-  #* 2. Assign formal arguments
   #******************************************************
   
   #* 1. Estimating Function
@@ -269,10 +253,7 @@ interval_t1 <- function(E=NULL, s=NULL, n=NULL, alpha=.05,
     E - qt(alpha_calc, n_est-1, lower.tail = FALSE) * s / sqrt(n_est)
   }
   
-  #* 2. Assign formala arguments. 
-  #*    The NULL study parameter has to be first, and then the remaining 
-  #*    parameters are assumed to come in the order listed in the arguments
-  #*    of interval_t1.
+  # Assign formal arguments.  The NULL argument is placed first
   formals(plan_fn) <-  c(plan_args[which_null], plan_args[!which_null])
   
   #******************************************************
@@ -285,9 +266,10 @@ interval_t1 <- function(E=NULL, s=NULL, n=NULL, alpha=.05,
       E = if (is.null(E)) NA else E,
       s = if (is.null(s)) NA else s,
       alpha = if (is.null(alpha)) NA else alpha,
-      two_tail = two_tail
-    ) %>%
-    dplyr::mutate(alpha_calc = alpha / (two_tail + 1))
+      tail = tail
+    )
+    
+  .params[["alpha_calc"]] <- with(.params, alpha / ((tail == "both") + 1))
   
   #******************************************************
   #* Estimate the missing parameter
@@ -319,7 +301,7 @@ interval_t1 <- function(E=NULL, s=NULL, n=NULL, alpha=.05,
   #* to the complete value of alpha
   if (is.null(alpha))
   {
-    .params[["alpha"]] <- .params[["alpha_calc"]] * (.params[["two_tail"]] + 1)
+    .params[["alpha"]] <- .params[["alpha_calc"]] * ((.params[["tail"]] == "both") + 1)
   }
   
   #* 2. Calculate integerish n
@@ -335,7 +317,5 @@ interval_t1 <- function(E=NULL, s=NULL, n=NULL, alpha=.05,
   }
   
   #* 3. Return the results
-  .params[c("n_est", "n", "E", "s", "alpha", "two_tail")]
+  .params[c("n_est", "n", "E", "s", "alpha", "tail")]
 }  
-
-utils::globalVariables(c("alpha_calc", "n_est"))

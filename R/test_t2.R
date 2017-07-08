@@ -10,7 +10,7 @@
 #'   
 #' @param delta Numeric vector of proposed observed differences between 
 #'   the two sample means.
-#' @param n  Numeric vector of the total sample size.
+#' @param n  Integer like vector of the total sample size.
 #' @param se Numeric vector of the estimated joint standard error between
 #'   the two samples.  Must be greater than 0.
 #' @param alpha Numeric vector of significance levels for the test.

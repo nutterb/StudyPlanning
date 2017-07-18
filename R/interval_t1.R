@@ -168,7 +168,7 @@ interval_t1 <- function(E=NULL, s=NULL, n=NULL, alpha=.05,
   
   coll <- checkmate::makeAssertCollection()
   
-  #* 1.  only one of E, n, s, alpha may be NULL (error)
+  # only one of E, n, s, alpha may be NULL (error)
   if (sum(which_null) != 1)
   {
     coll$push("Exactly one of `E`, `n`, `s`, and `alpha` may be NULL")
@@ -191,12 +191,10 @@ interval_t1 <- function(E=NULL, s=NULL, n=NULL, alpha=.05,
                         coll = coll,
                         null.ok = TRUE)
 
-  #* 6 tail must be a subset of both, left, right
   checkmate::assert_subset(x = tail,
                            choices = c("both", "left", "right"),
                            add = coll)
   
-  #* Print errors
   checkmate::reportAssertions(coll)
   
   #******************************************************

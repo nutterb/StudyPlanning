@@ -20,6 +20,8 @@
 #'   interval (\code{lower}, \code{upper})
 #' @param .var.name \code{character(1)}, an optional character vector giving 
 #'   the name of the variable being checked.
+#' @param ... Additional arguments to pass to 
+#'   \code{\link[checkmate]{assert_numeric}}
 #'
 #' @details If the endpoint of the interval is found in \code{x}, the endpoint
 #'   is removed from \code{x} and the remaining values are returned. An 
@@ -55,7 +57,8 @@
 remove_limit <- function(x, lower = 0, upper = 1,
                          coll = NULL, error_none_left = TRUE,
                          assert_between = TRUE,
-                         .var.name = "x")
+                         .var.name = "x", 
+                         ...)
 {
   if (!is.null(coll))
   {
@@ -68,23 +71,18 @@ remove_limit <- function(x, lower = 0, upper = 1,
   }
   
   checkmate::assert_numeric(x = x,
+                            null.ok = TRUE,
                             add = coll)
   
-  checkmate::assert_numeric(x = lower,
-                            len = 1,
-                            add = coll)
-  
-  checkmate::assert_numeric(x = upper,
-                            len = 1,
-                            add = coll)
-  
-  checkmate::assert_logical(x = error_none_left,
-                            len= 1,
-                            add = coll)
-  
-  checkmate::assert_logical(x = assert_between,
-                            len = 1,
-                            add = coll)
+  massert(~ lower + upper,
+          checkmate::assert_numeric,
+          fixed = list(len = 1, 
+                       add = coll))
+
+  massert(~ error_none_left + assert_between,
+          checkmate::assert_logical,
+          fixed = list(len = 1,
+                       add = coll))
   
   checkmate::assert_character(x = .var.name,
                               len = 1,
@@ -111,7 +109,8 @@ remove_limit <- function(x, lower = 0, upper = 1,
     lower = if (assert_between) lower else -Inf,
     upper = if (assert_between) upper else Inf,
     add = coll,
-    .var.name = .var.name
+    .var.name = .var.name,
+    ...
   )
   
   checkmate::reportAssertions(coll)

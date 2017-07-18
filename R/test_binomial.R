@@ -124,71 +124,23 @@ test_binomial <- function(n = NULL, p0 = NULL, p1 = NULL,
   
   coll <- checkmate::makeAssertCollection()
   
-  if (!is.null(n))
+  checkmate::assert_integerish(x = n,
+                               null.ok = TRUE,
+                               add = coll)
+
+  for (arg in c("p0", "p1", "alpha", "power"))
   {
-    checkmate::assert_integerish(x = n,
-                                 add = coll)
+    assign(arg, 
+           remove_limit(x = get(arg),
+                        coll = coll,
+                        .var.name = arg,
+                        null.ok = TRUE))
   }
-  
-  if (!is.null(p0))
-  {
-    # Remove values of p0 that are 0 or 1
-    if (any(p0 %in% 0:1))
-    {
-      p0 <- p0[!p0 %in% 0:1]
-      warning("Elements in `p0` equal to 0 or 1 have been removed")
-    }
     
-    checkmate::assert_numeric(x = p0,
-                              lower = 0,
-                              upper = 1,
-                              add = coll)
-  }
-  
-  if (!is.null(p1))
-  {
-    # Remove values of p1 that are 0 or 1
-    if (any(p1 %in% 0:1))
-    {
-      p1 <- p1[!p1 %in% 0:1]
-      warning("Elements in `p1` equal to 0 or 1 have been removed")
-    }
-    
-    checkmate::assert_numeric(x = p1,
-                              lower = 0,
-                              upper = 1,
-                              add = coll)
-  }
-  
-  if (!is.null(alpha))
-  {
-    # Remove values of alpha that are 0 or 1
-    if (any(alpha %in% 0:1))
-    {
-      alpha <- alpha[!alpha %in% 0:1]
-      warning("Elements in `alpha` equal to 0 or 1 have been removed")
-    }
-    
-    checkmate::assert_numeric(x = alpha,
-                              lower = 0,
-                              upper = 1,
-                              add = coll)
-  }
-  
-  if (!is.null(power))
-  {
-    # Remove values of power that are 0 or 1
-    if (any(power %in% 0:1))
-    {
-      power <- power[!power %in% 0:1]
-      warning("Elements in `power` equal to 0 or 1 have been removed")
-    }
-    
-    checkmate::assert_numeric(x = power,
-                              lower = 0,
-                              upper = 1,
-                              add = coll)
-  }
+  massert(~ interval_min + interval_max,
+          checkmate::assert_numeric,
+          fixed = list(null.ok = TRUE,
+                       add = coll))
   
   checkmate::assert_subset(x = tail,
                            choices = c("both", "left", "right"),
@@ -196,20 +148,6 @@ test_binomial <- function(n = NULL, p0 = NULL, p1 = NULL,
   
   checkmate::assert_logical(x = conservative,
                             add = coll)
-  
-  if (!is.null(interval_min))
-  {
-    checkmate::assert_numeric(x = interval_min,
-                              len = 1,
-                              add = coll)
-  }
-  
-  if (!is.null(interval_max))
-  {
-    checkmate::assert_numeric(x = interval_max,
-                              len = 1,
-                              add = coll)
-  }
   
   checkmate::reportAssertions(coll)
   

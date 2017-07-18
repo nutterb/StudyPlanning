@@ -174,41 +174,23 @@ interval_t1 <- function(E=NULL, s=NULL, n=NULL, alpha=.05,
     coll$push("Exactly one of `E`, `n`, `s`, and `alpha` may be NULL")
   }
   
-  #* 2. E must be on the interval (0, Inf)
-  if (!is.null(E))
-  {
-    checkmate::assert_numeric(x = E,
-                              lower = 0,
-                              min.len = 1,
-                              add = coll)
-  }
+  massert(~ E + s + interval_min + interval_max,
+          checkmate::assert_numeric,
+          lower = list(E = 0, s = 0),
+          fixed = list(null.ok = TRUE,
+                       min.len = 1,
+                       add = coll))
   
-  #* 3. s must be on the interval (0, Inf)
-  if (!is.null(s))
-  {
-    checkmate::assert_numeric(x = s,
-                              lower = 0,
-                              min.len = 1,
-                              add = coll)
-  }
+  checkmate::assert_integerish(x = n,
+                               lower = 2,
+                               min.len = 1,
+                               null.ok = TRUE,
+                               add = coll)
   
-  #* 4. n must be integerish on the interval [2, Inf)
-  if (!is.null(n))
-  {
-    checkmate::assert_integerish(x = n,
-                                 lower = 2,
-                                 min.len = 1,
-                                 add = coll)
-  }
-  
-  #* 5. alpha must be on the interval (0, 1)
-  if (!is.null(alpha))
-  {
-    remove_limit(x = alpha,
-                 coll = coll,
-                 .var.name = "alpha")
-  }
-  
+  alpha <- remove_limit(x = alpha,
+                        coll = coll,
+                        null.ok = TRUE)
+
   #* 6 tail must be a subset of both, left, right
   checkmate::assert_subset(x = tail,
                            choices = c("both", "left", "right"),

@@ -84,7 +84,7 @@ test_that(
     expect_equal(
       test_binomial(n=NULL, p0=.5, p1=.8, alpha=.05, power = 0.8,
                     tail=c('right', 'both', 'left'))[["n"]],
-      18
+      c(18, 23, NA)
     )
   }
 )

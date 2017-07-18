@@ -5,7 +5,7 @@
 \title{Remove Limits From a Vector}
 \usage{
 remove_limit(x, lower = 0, upper = 1, coll = NULL,
-  error_none_left = TRUE, assert_between = TRUE, .var.name = "x")
+  error_none_left = TRUE, assert_between = TRUE, .var.name = "x", ...)
 }
 \arguments{
 \item{x}{Numeric vector}
@@ -26,6 +26,9 @@ interval (\code{lower}, \code{upper})}
 
 \item{.var.name}{\code{character(1)}, an optional character vector giving 
 the name of the variable being checked.}
+
+\item{...}{Additional arguments to pass to 
+\code{\link[checkmate]{assert_numeric}}}
 }
 \value{
 Returns a numeric vector.

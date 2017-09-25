@@ -14,8 +14,6 @@ Description: Sample size and power analyses often focus on a fixed set of
     assumptions will have on the power of the statistical tests.
 Suggests:
     devtools,
-    dplyr,
-    ggplot2,
     knitr,
     testthat
 Imports:

@@ -4,7 +4,7 @@
 \alias{interval_p1}
 \title{Study Parameters for One Sample Z-Test of Proportions}
 \usage{
-interval_p1(n = NULL, E = NULL, p0 = 0.5, alpha = 0.05, tail = "both",
+interval_p1(n = NULL, E = NULL, p = 0.5, alpha = 0.05, tail = "both",
   upper = FALSE, interval_min = NULL, interval_max = NULL, ...)
 }
 \arguments{
@@ -13,7 +13,7 @@ interval_p1(n = NULL, E = NULL, p0 = 0.5, alpha = 0.05, tail = "both",
 
 \item{E}{numeric, the margin of error. Must be on the interval (-1, 1)}
 
-\item{p0}{numeric, the hypothesize proportion. Must be on the interval (0, 1)}
+\item{p}{numeric, the hypothesize proportion. Must be on the interval (0, 1)}
 
 \item{alpha}{numeric, the significance level. Must be on the interval (0, 1)}
 
@@ -21,7 +21,7 @@ interval_p1(n = NULL, E = NULL, p0 = 0.5, alpha = 0.05, tail = "both",
 Must be a subset of \code{c("both", "left", "right")}}
 
 \item{upper}{code{logical(1)}. When \code{FALSE}, the default interval when 
-solving for \code{p0} is \code{c(0, 0.5)}, otherwise, it is 
+solving for \code{p} is \code{c(0, 0.5)}, otherwise, it is 
 \code{c(0.5, 1.0)}.}
 
 \item{interval_min}{numeric, the minimum value of the search interval.}
@@ -35,13 +35,13 @@ Returns a data frame with the following columns:
 \itemize{
  \item{\code{n_est} } Estimated sample size.
  \item{\code{n }} Sample size rounded up to the next largest integer.
- \item{\code{p0 }} Hypothesized proportion
+ \item{\code{p }} Hypothesized proportion
  \item{\code{E }} Margin of error
  \item{\code{alpha }} Significance level
  \item{\code{tail }} Character value indicating if the test is two-tailed,
    left-tailed, or right-tailed.
- \item{\code{np }} The product of \code{n} and \code{p0}. 
- \item{\code{nq }} The product of \code{n} and \code{1 - p0}.
+ \item{\code{np }} The product of \code{n} and \code{p}. 
+ \item{\code{nq }} The product of \code{n} and \code{1 - p}.
 }
 
 \code{np} and \code{nq} are provided to assist in evaluating if the study
@@ -56,7 +56,7 @@ Binomial distribution.  Study parameters include the sample size, margin
 of error, hypothesized proportion, and significance level.
 }
 \details{
-Exactly one of \code{n}, \code{p0}, \code{E}, and 
+Exactly one of \code{n}, \code{p}, \code{E}, and 
  \code{alpha} must be \code{NULL}.  The solution is returned for the 
  \code{NULL} value that satisfies the other arguments.
 }
@@ -65,7 +65,7 @@ Exactly one of \code{n}, \code{p0}, \code{E}, and
 \tabular{lll}{
   Study Parameter \tab Minimum \tab Maximum \cr
   n               \tab 2       \tab 1e7     \cr
-  p0              \tab 0       \tab 1     \cr
+  p              \tab 0       \tab 1     \cr
   E               \tab -1      \tab 1     \cr
   alpha           \tab 0       \tab 1       
 }
@@ -76,16 +76,16 @@ Exactly one of \code{n}, \code{p0}, \code{E}, and
 \enumerate{
  \item When \code{n = NULL}, return the value of \code{n} that satisfies 
    the other arguments.
- \item When \code{p0 = NULL}, return the value of \code{p0} that 
+ \item When \code{p = NULL}, return the value of \code{p} that 
    satisfies the other arguments.
  \item When \code{E = NULL}, return the value of \code{E} that satisfies
    the other arguments.
  \item When \code{alpha = NULL}, return the value of \code{alpha} that
    satisfies the other arguments.
- \item Cast an error if the number of \code{n}, \code{p0}, \code{E},
+ \item Cast an error if the number of \code{n}, \code{p}, \code{E},
    and \code{alpha} that are \code{NULL} is not exactly one.
  \item Cast an error if \code{n} is not integerish on the interval [2, Inf).
- \item Cast an error if \code{p0} is not numeric on the interval 
+ \item Cast an error if \code{p} is not numeric on the interval 
    (-1, 1)
  \item Cast an error if \code{E} is not numeric.
  \item Cast an error if \code{alpha} is not numeric on the interval (0, 1)
@@ -98,7 +98,7 @@ Exactly one of \code{n}, \code{p0}, \code{E}, and
 }
 \examples{
 # Example from https://onlinecourses.science.psu.edu/stat500/node/31
-interval_p1(p0 = 0.72, E = 0.01, alpha = 0.05)
+interval_p1(p = 0.72, E = 0.01, alpha = 0.05)
 
 }
 \author{

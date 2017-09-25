@@ -5,7 +5,7 @@
 \title{Study Parameters for One Sample Z-Test of Proportions}
 \usage{
 interval_p1(n = NULL, E = NULL, p0 = 0.5, alpha = 0.05, tail = "both",
-  interval_min = NULL, interval_max = NULL, ...)
+  upper = FALSE, interval_min = NULL, interval_max = NULL, ...)
 }
 \arguments{
 \item{n}{integerish value, the sample size. Must be on the interval 
@@ -19,6 +19,10 @@ interval_p1(n = NULL, E = NULL, p0 = 0.5, alpha = 0.05, tail = "both",
 
 \item{tail}{character, determines the direction of the confidence interval.
 Must be a subset of \code{c("both", "left", "right")}}
+
+\item{upper}{code{logical(1)}. When \code{FALSE}, the default interval when 
+solving for \code{p0} is \code{c(0, 0.5)}, otherwise, it is 
+\code{c(0.5, 1.0)}.}
 
 \item{interval_min}{numeric, the minimum value of the search interval.}
 
@@ -89,6 +93,7 @@ Exactly one of \code{n}, \code{p0}, \code{E}, and
    \code{c("both", "left", "right")}
  \item Cast an error if \code{interval_min} is not \code{numeric(1)}
  \item Cast an error if \code{interval_max} is not \code{numeric(1)}
+ \item Cast en error if \code{upper} is not \code{logical(1)}
 }
 }
 \examples{

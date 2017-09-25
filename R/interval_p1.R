@@ -13,6 +13,9 @@
 #' @param alpha numeric, the significance level. Must be on the interval (0, 1)
 #' @param tail character, determines the direction of the confidence interval.
 #'   Must be a subset of \code{c("both", "left", "right")}
+#' @param upper code{logical(1)}. When \code{FALSE}, the default interval when 
+#'   solving for \code{p0} is \code{c(0, 0.5)}, otherwise, it is 
+#'   \code{c(0.5, 1.0)}.
 #' @param interval_min numeric, the minimum value of the search interval.
 #' @param interval_max numeric, the maximum value of the search interval.
 #' @param ... additional arguments to pass to \code{uniroot}
@@ -72,6 +75,7 @@
 #'    \code{c("both", "left", "right")}
 #'  \item Cast an error if \code{interval_min} is not \code{numeric(1)}
 #'  \item Cast an error if \code{interval_max} is not \code{numeric(1)}
+#'  \item Cast en error if \code{upper} is not \code{logical(1)}
 #' }
 #' 
 #' @examples 
@@ -80,7 +84,8 @@
 #'
 #' @export
 interval_p1 <- function(n = NULL, E = NULL, p0 = 0.50, alpha = 0.05,
-                        tail = "both", interval_min = NULL,
+                        tail = "both", upper = FALSE, 
+                        interval_min = NULL,
                         interval_max = NULL, ...)
 {
   #******************************************************************
@@ -98,6 +103,7 @@ interval_p1 <- function(n = NULL, E = NULL, p0 = 0.50, alpha = 0.05,
                        null.ok = TRUE))
   
   alpha <- remove_limit(x = alpha,
+                        null.ok = TRUE,
                         coll = coll,
                         .var.name = "alpha")
   
@@ -109,6 +115,10 @@ interval_p1 <- function(n = NULL, E = NULL, p0 = 0.50, alpha = 0.05,
   checkmate::assert_subset(x = tail,
                            choices = c("both", "left", "right"),
                            add = coll)
+  
+  checkmate::assert_logical(x = upper,
+                            len = 1,
+                            add = coll)
   
   plan_args <- list(n_est = n,
                     p0 = p0,
@@ -151,7 +161,8 @@ interval_p1 <- function(n = NULL, E = NULL, p0 = 0.50, alpha = 0.05,
         EXPR = names(plan_args)[which_null],
         "n_est" = 2,
         "E" = -1,
-        0  # alpha and p0
+        "p0" = 0 + 0.5 * upper,
+        0  # alpha
       )
   }
   
@@ -161,7 +172,8 @@ interval_p1 <- function(n = NULL, E = NULL, p0 = 0.50, alpha = 0.05,
       switch(
         EXPR = names(plan_args[which_null]),
         "n_est" = 1e7, # n
-        1          # E, alpha, and p0
+        "p0" = 0.5 + 0.5 * upper,
+        1          # E, alpha,
       )
   }
 

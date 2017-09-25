@@ -97,6 +97,7 @@ interval_z1 <- function(n = NULL, sigma = NULL, E = NULL, alpha = 0.05,
                        null.ok = TRUE))
   
   alpha <- remove_limit(x = alpha,
+                        null.ok = TRUE,
                         coll = coll,
                         .var.name = "alpha")
   
